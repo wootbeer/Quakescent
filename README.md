@@ -5,6 +5,8 @@ six-degrees-of-freedom flight, cockpit and weapons.
 
 ![Flying the Pyro-GX through Quake's E1M3](docs/screenshot.png)
 
+▶ **[Watch it in action on YouTube](https://www.youtube.com/watch?v=51zv19tK1pI)**
+
 Quakescent is a mod for an unmodified [FTEQW](https://www.fteqw.org/), a
 Quake engine. Quake's monsters, maps and music stay as they are. You become
 Descent's ship:
