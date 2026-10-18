@@ -2,12 +2,13 @@
 """
 build.py - compile Quakescent's QuakeC and assemble the mod folder.
 
-    python tools/build.py [--fteqcc PATH] [--out build/quakescent]
+    python tools/build.py [--fteqcc PATH] [--out quakescent]
 
 Compiles qc/progs.src (progs.dat, the server side) and csqc/csprogs.src
 (csprogs.dat, the cockpit and the client side of the ship) with FTE's QuakeC
-compiler, and copies mod/ next to them.  The result is a folder FTEQW loads
-as a game directory (fteqw -game quakescent).
+compiler, and copies mod/ next to them, in quakescent/ (the game directory FTEQW
+loads with -game quakescent; the launchers run this when the source has
+changed).
 
 fteqcc is looked for in --fteqcc, the FTEQCC environment variable, tools/,
 and the PATH; if it isn't found the official build is downloaded into
@@ -84,15 +85,14 @@ def compile_progs(fteqcc, srcdir, srcfile, out):
     if r.returncode != 0 or errors:
         print(r.stdout)
         sys.exit('error: compiling %s/%s failed' % (srcdir, srcfile))
-    built = os.path.join(ROOT, 'build', 'quakescent', out)
-    print('compiled %s' % os.path.relpath(built, ROOT))
-    return built
+    print('compiled %s' % out)
+    return os.path.join(ROOT, 'build', 'quakescent', out)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     ap.add_argument('--fteqcc')
-    ap.add_argument('--out', default=os.path.join(ROOT, 'build', 'quakescent'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'quakescent'))
     args = ap.parse_args(argv)
 
     fteqcc = find_fteqcc(args.fteqcc)

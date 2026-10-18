@@ -1,0 +1,12 @@
+# 0.1.0
+
+First version.
+
+- The Pyro-GX in Quake on FTEQW: 6DOF flight with Descent's physics, the
+  cockpit and gauges, the reticle, the rear view and the message line.
+- Descent 1's weapons (lasers 1-4 and quad, vulcan, spreadfire, plasma,
+  fusion; concussion, homing, smart, proximity, mega; flares) with its
+  weapon models and effects.
+- Quake's pickups as Descent's powerups.
+- The converter reads registered (1.4/1.5) and shareware (1.0-1.2)
+  Descent 1 data.

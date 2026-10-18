@@ -1,0 +1,61 @@
+name: Release
+
+# Push a tag like v0.1.0 to build and publish a release, or run it by hand
+# from the Actions tab: with "publish" ticked it tags v<VERSION> on the
+# chosen branch and publishes; without, it only builds the zip as an
+# artifact.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a release tagged v<VERSION>'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Read VERSION
+        id: version
+        shell: bash
+        run: echo "tag=v$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Check the tag matches VERSION
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: test "${{ steps.version.outputs.tag }}" = "${GITHUB_REF_NAME}"
+
+      - name: Build qsconvert.exe
+        run: |
+          python -m pip install pyinstaller==6.11.1
+          pyinstaller --onefile --name qsconvert --paths tools --distpath build/exe tools/qsconvert.py
+
+      - name: Assemble the release zip
+        run: python tools/make_release.py --exe build/exe/qsconvert.exe -o dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quakescent
+          path: dist/Quakescent-*.zip
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/') || inputs.publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Quakescent ${{ steps.version.outputs.tag }}
+          files: dist/Quakescent-*.zip
+          body_path: CHANGELOG.md
