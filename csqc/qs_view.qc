@@ -28,6 +28,7 @@ float qs_turnroll;               // visual bank into turns, degrees
 float qs_yawrate;                // smoothed turning rate, degrees per second
 float qs_rearview;
 float qs_rear_since;
+float qs_hits_seen;
 entity qs_pred;
 vector qs_view_org;
 
@@ -198,6 +199,16 @@ void(float dt) QS_UpdateOrientation =
 	else
 		QS_Rotate(-pitchin, yawin, 0);
 
+	// Getting hit knocks the ship around a little; Descent's rotational
+	// drag settles it.
+	if (getstatf(STAT_QS_HITS) != qs_hits_seen)
+	{
+		local float k;
+		qs_hits_seen = getstatf(STAT_QS_HITS);
+		k = min(getstatf(STAT_QS_HITDAMAGE), 40) / 400;
+		qs_rotvel = qs_rotvel + [QS_CRandom() * k, QS_CRandom() * k, QS_CRandom() * k];
+	}
+
 	// Banking uses Descent's rotational thrust and drag.
 	bankin = qs_key_bankr - qs_key_bankl;
 	qs_rotvel = QS_SimulateDrag(qs_rotvel, [0, 0, bankin * QS_SHIP_MAX_ROTTHRUST / QS_SHIP_MASS],
@@ -308,6 +319,7 @@ void(float vwidth, float vheight, float notmenu) CSQC_UpdateView =
 	{
 		if (!qs_basis_init)
 		{
+			qs_hits_seen = getstatf(STAT_QS_HITS);
 			// First frame as a ship: start from the view the engine had.
 			QS_AnglesToBasis(getproperty(VF_ANGLES));
 			qs_basis_init = TRUE;

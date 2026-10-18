@@ -29,6 +29,8 @@ void() QS_BackpackTouch;
 void() QS_ItemLook;
 void() QS_GiveAll;
 .float qs_ship;
+.float qs_hits;               // times hit, and the last hit's damage, for
+.float qs_hitdamage;          // the client's jolt
 void() QS_StartFrame;
 void(entity e) QS_IckKilled;
 void(vector org, vector vel, float damage) QS_SpawnBlood;

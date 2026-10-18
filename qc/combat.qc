@@ -169,6 +169,12 @@ void(entity targ, entity inflictor, entity attacker, float damage) T_Damage=
 		dir = normalize(dir);
 		targ.velocity = targ.velocity + dir*damage*8;
 	}
+// Quakescent: and the ship tumbles a little, as Descent's does
+	if (targ.qs_ship && damage > 0)
+	{
+		targ.qs_hits = targ.qs_hits + 1;
+		targ.qs_hitdamage = damage;
+	}
 
 // check for godmode or invincibility
 	if (targ.flags & FL_GODMODE)

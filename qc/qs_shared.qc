@@ -85,6 +85,8 @@ const float STAT_QS_ORIGIN_Z = 52;
 const float STAT_QS_VEL_X = 53;
 const float STAT_QS_VEL_Y = 54;
 const float STAT_QS_VEL_Z = 55;
+const float STAT_QS_HITS = 56;       // counts hits; the client jolts the ship
+const float STAT_QS_HITDAMAGE = 57;
 
 const float QS_STATE_SHIP = 1;       // flying (otherwise use the engine's view)
 const float QS_STATE_DEAD = 2;

@@ -12,6 +12,7 @@ First version.
   Mode.
 - Descent 1's cheat codes, typed during play (and Doomscent's astral,
   buggin and bittersweet).
+- Getting hit knocks the ship around, as in Descent.
 - Ick Mode: monsters wear a face, bleed green and warp out.
 - Lasers and other weapons cast coloured light as they fly, as in Descent.
 - The converter reads registered (1.4/1.5) and shareware (1.0-1.2)

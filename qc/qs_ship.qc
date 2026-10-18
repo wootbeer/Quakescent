@@ -133,6 +133,8 @@ void() QS_RegisterStats =
 	clientstat(STAT_QS_VEL_X, EV_FLOAT, velocity_x);
 	clientstat(STAT_QS_VEL_Y, EV_FLOAT, velocity_y);
 	clientstat(STAT_QS_VEL_Z, EV_FLOAT, velocity_z);
+	clientstat(STAT_QS_HITS, EV_FLOAT, qs_hits);
+	clientstat(STAT_QS_HITDAMAGE, EV_FLOAT, qs_hitdamage);
 };
 
 void() QS_UpdateStats =
