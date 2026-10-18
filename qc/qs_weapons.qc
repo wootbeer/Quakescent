@@ -587,6 +587,16 @@ void(entity p, float id) QS_ProjectileLight =
 	{ c = '1 0.6 0.3'; r = 120; }               // missiles
 	else
 		return;
+	// Each light is a realtime light, a whole extra lighting pass; rapid
+	// fire would put dozens in the air and stall the game.  Light only
+	// the first few.
+	local entity e;
+	local float n;
+	n = 0;
+	for (e = find(world, classname, "qs_weapon"); e; e = find(e, classname, "qs_weapon"))
+		if (e.light_lev > 0)
+			if (++n >= 6)
+				return;
 	p.pflags = PFLAGS_FULLDYNAMIC | PFLAGS_NOSHADOW;
 	p.color = c;
 	p.light_lev = r;
@@ -718,12 +728,12 @@ entity(float id, vector org, vector dir, float mult) QS_SpawnProjectile =
 	}
 	if (id == 11 || id == 32)
 		p.effects = 0;
-	if (self.qs_cheats & QSC_BOUNCY && p.movetype == MOVETYPE_FLYMISSILE)
+	if ((self.qs_cheats & QSC_BOUNCY) && p.movetype == MOVETYPE_FLYMISSILE)
 	{
 		p.movetype = MOVETYPE_BOUNCEMISSILE;
 		p.qs_bounces = 2;
 	}
-	if (self.qs_cheats & QSC_HOMING && p.think == QS_ProjectileExpire && id != 9)
+	if ((self.qs_cheats & QSC_HOMING) && p.think == QS_ProjectileExpire && id != 9)
 	{
 		p.think = QS_HomingThink;
 		p.nextthink = time + 0.05;

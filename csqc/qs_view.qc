@@ -353,6 +353,13 @@ void() QS_ViewEffects =
 	if (flags & QSF_HEADLIGHT_ON)
 	{
 		local float l;
+		// FTE's "286" and "Fast" presets turn every dynamic light off,
+		// which leaves the headlight dark: put back FTE's default.
+		if (!cvar("r_shadow_realtime_dlight") && (!cvar("r_dynamic") || cvar("gl_flashblend")))
+		{
+			cvar_set("r_shadow_realtime_dlight", "1");
+			print("Headlight: turned on dynamic lights (r_shadow_realtime_dlight 1)\n");
+		}
 		l = dynamiclight_add(qs_view_org + qs_fwd * 8, 900, '2.4 2.3 2.1', 0, "", 0);
 		dynamiclight_set(l, LFIELD_ANGLES, getproperty(VF_ANGLES));
 		dynamiclight_set(l, LFIELD_FOV, 70);

@@ -16,6 +16,10 @@ First version.
   Mode.
 - Descent 1's cheat codes, typed during play (and Doomscent's astral,
   buggin and bittersweet).
+- The headlight turns on FTE's dynamic lights if a graphics preset
+  (Fast, 286) has them off, since it can't shine without them.
+- Shots' coloured lights are capped, so rapid fire no longer stalls the
+  game.
 - Getting hit knocks the ship around, as in Descent.
 - Ick Mode: monsters wear a face, bleed green and warp out.
 - Lasers and other weapons cast coloured light as they fly, as in Descent.
