@@ -51,7 +51,7 @@ string(float i) QS_MenuValue =
 	{
 	case 0: return QS_OnOff(cvar("qs_cockpit"));
 	case 1: return QS_OnOff(cvar("qs_aimmomentum"));
-	case 2: return cvar("qs_levelturn") ? "Level (Doom-style)" : "Ship's axes (Descent)";
+	case 2: return cvar("qs_levelturn") ? "Level (Quake-style)" : "Ship's axes (Descent)";
 	case 3: return QS_OnOff(cvar("qs_autolevel"));
 	case 4: return QS_OnOff(cvar("qs_bankturns"));
 	case 5: return QS_OnOff(cvar("qs_shipbob"));
