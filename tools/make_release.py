@@ -36,6 +36,7 @@ def main():
     out = os.path.join(args.outdir, name + '.zip')
     files = {
         'Quakescent.bat': 'Quakescent.bat',
+        'Quakescent2.bat': 'Quakescent2.bat',
         'quakescent.sh': 'quakescent.sh',
         'README.md': 'README.md',
         'LICENSE': 'LICENSE',

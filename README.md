@@ -21,6 +21,8 @@ becomes Descent's ship:
   lasers, missiles and fusion bolt use Descent's own 3D models.
 - **Descent's powerups.** Quake's pickups become Descent's spinning
   powerups (see below).
+- **Descent II mode** (optional): Descent II's cockpit, sounds, weapons
+  and equipment. See below.
 - **Shootable switches.** Buttons you'd have to press in Quake also fire
   when you shoot them, as in Descent.
 - **Descent's cheat codes** (`gabbagabbahey`, `racerx`, `porgys`...),
@@ -44,12 +46,19 @@ becomes Descent's ship:
      registered game (1.4/1.5) and the 1.0-1.2 shareware both work.
 3. Double-click `Quakescent.bat`.
 
+For **Descent II mode**, also copy `DESCENT2.HOG`, `DESCENT2.HAM`,
+`GROUPA.PIG` and `DESCENT2.S22` from Descent II into `data` and start
+`Quakescent2.bat` instead (or `Quakescent.bat -descent2`). Descent 1 stays
+the default; with only Descent II's files in `data`, `Quakescent.bat` uses
+Descent II mode.
+
 On the first run the launcher:
 
 - offers to download FTEQW (2026-07-13) into an `fte` folder (or set the
   `FTEQW` environment variable to an existing `fteqw64.exe`);
-- converts your Descent files into `quakescent\qs_descent_assets.pk3`
-  (cockpit, gauges, sprites, models, sounds, fonts).
+- converts your Descent files into `descent1\qs_descent_assets.pk3` (or
+  `descent2\` for Descent II mode): cockpit, gauges, sprites, models,
+  sounds, fonts.
 
 Then pick New Game from Quake's menu, or pass a map:
 `Quakescent.bat +map e1m1 +skill 2`.
@@ -65,7 +74,8 @@ and the launcher will run the script instead.
 
 ## Linux
 
-Put your files in `id1/` and `data/` as above and run `./quakescent.sh`.
+Put your files in `id1/` and `data/` as above and run `./quakescent.sh`
+(`./quakescent.sh --descent2` for Descent II mode).
 It needs Python 3, and downloads FTEQW into `fte/` on the first run (or set
 `FTEQW=/path/to/fteqw64`).
 
@@ -79,8 +89,12 @@ first time. By hand:
 
 ```
 python tools/build.py                 # qc/ + csqc/ -> quakescent/
-python tools/qsconvert.py data -o quakescent/qs_descent_assets.pk3
-fteqw64 -basedir . -game quakescent +map e1m1
+python tools/qsconvert.py data -o descent1/qs_descent_assets.pk3
+fteqw64 -basedir . -game descent1 -game quakescent +map e1m1
+
+# Descent II mode
+python tools/qsconvert.py --descent2 data -o descent2/qs_descent_assets.pk3
+fteqw64 -basedir . -game descent2 -game quakescent +map e1m1
 ```
 
 To make a release, set `VERSION` and add a `CHANGELOG.md` entry, then either
@@ -97,13 +111,16 @@ push a tag `v<VERSION>` or run the Release workflow from the Actions tab with
 | Pitch and turn | Mouse (arrow keys also turn and pitch) |
 | Bank left / right | Q / E |
 | Fire primary / secondary | Left / right mouse button |
-| Select primary weapon | 1-5 (laser, vulcan, spreadfire, plasma, fusion) |
-| Select secondary weapon | 6-0 (concussion, homing, proximity, smart, mega) |
+| Select primary weapon | 1-5 (laser, vulcan, spreadfire, plasma, fusion; press again for Descent II's super laser, gauss, helix, phoenix, omega) |
+| Select secondary weapon | 6-0 (concussion, homing, proximity, smart, mega; press again for Descent II's flash, guided, smart mine, mercury, earthshaker) |
 | Cycle secondary / primary | Middle mouse button or wheel down / wheel up |
 | Fire flare | F |
 | Drop proximity bomb | B |
 | Rear view (tap to toggle, hold to peek) | V |
 | Level the ship | Z |
+| Afterburner (Descent II) | Left Shift |
+| Headlight on/off (Descent II) | H |
+| Energy to shield converter (Descent II) | G (hold) |
 | Quakescent options | F7 |
 
 **F7** opens Quakescent's options (cockpit, turning, mouse momentum,
@@ -152,6 +169,37 @@ Mouse speed is FTE's `sensitivity`.
 The biosuit and the runes stay as they are. Impulse 255 gives everything
 (outside deathmatch).
 
+## Descent II mode
+
+Descent II mode keeps everything above and adds what Descent II brought.
+The cockpit, gauges and weapon pictures are Descent II's high-resolution
+ones, and its sounds are used.
+
+- **Weapons.** Each number key holds a Descent 1 weapon and its Descent II
+  successor; press the key again to switch. About half of Quake's weapon
+  and ammo pickups turn into the Descent II versions:
+
+  | Quake | Descent 1 or Descent II |
+  |---|---|
+  | Super shotgun | Spreadfire or helix cannon |
+  | Nailgun | Vulcan or gauss cannon |
+  | Super nailgun | Plasma or phoenix cannon |
+  | Thunderbolt | Fusion or omega cannon |
+  | Rocket launcher | Smart missile or 4 mercury missiles |
+  | Shells | Concussion or flash missiles |
+  | Large rockets | Homing or guided missiles |
+  | Small rockets | Proximity bombs or smart mines |
+  | Grenade launcher | Laser upgrade, up to the super laser's level 6 |
+  | Megahealth | Shields, or shields and an earthshaker missile |
+
+  The guided missile is flown from its own view with the mouse; the omega
+  cannon locks onto whatever is in front of it and recharges from energy.
+- **Equipment.** The biosuit becomes the afterburner, and the green,
+  yellow and red armours can be the headlight, the energy to shield
+  converter and the ammo rack (double missile capacity).
+- **Cheat codes** are Descent II's (below); they need no
+  `gabbagabbahey`.
+
 ## Cheat codes
 
 Type them during play. As in Descent 1, `gabbagabbahey` switches the others
@@ -174,8 +222,17 @@ on first; in multiplayer they need `sv_cheats 1`.
 | `buggin` | Turbo mode: double speed, on/off |
 | `bittersweet` | Acid: the view wobbles, on/off |
 
-The last three are Doomscent's additions. Descent II's codes come with
-Descent II mode.
+The last three are Doomscent's additions.
+
+In Descent II mode the codes are Descent II's: `honestbob` (wowie zowie),
+`oralgroove` (all keys), `alifalafel` (accessories), `almighty`
+(invulnerability), `blueorb` (full shields), `delshiftb` (kill everything
+and exit), `freespace` (warp), `rockrgrl` (full map), `wildfire` (rapid
+fire), `duddaboo` (bouncing weapons), `lpnlizard` (homing weapons),
+`imagespace` (monsters stop attacking), `spaniard` (kill every monster),
+`silkwing` (monsters fight each other), `godzilla` (ramming kills), plus
+`astral`, `buggin` and `bittersweet`. Its old Descent 1 codes call you a
+cheater, as Descent II did.
 
 ## Licence
 

@@ -13,10 +13,12 @@
 // to Quake's own models, sounds and status bar.
 
 float qs_assets_loaded;
+var float qs_game = 1;               // 2 in Descent II mode (a Descent II pack)
+hashtable qs_picsize;            // picture name -> size in the 320x200 layout
 float qs_have_sound[256];
-float qs_vclip_frames[100];
-float qs_vclip_time[100];        // seconds per frame
-float qs_vclip_size[100];        // largest side of the first frame, pixels
+float qs_vclip_frames[120];
+float qs_vclip_time[120];        // seconds per frame
+float qs_vclip_size[120];        // largest side of the first frame, pixels
 vector qs_gun[8];                // Pyro-GX gun points, Descent units
 float qs_have_guns;
 string qs_models;                // "|laser1|pyro|..."
@@ -67,6 +69,7 @@ void() QS_LoadAssets =
 	if (fh < 0)
 		return;
 	qs_assets_loaded = TRUE;
+	qs_picsize = hash_createtab(128, EV_VECTOR);
 	models = "|";
 	powerups = "|";
 	pics = "|";
@@ -88,7 +91,7 @@ void() QS_LoadAssets =
 		else if (w == "vclip" && n >= 6)
 		{
 			num = stof(argv(1));
-			if (num >= 0 && num < 100)
+			if (num >= 0 && num < 120)
 			{
 				qs_vclip_frames[num] = stof(argv(2));
 				qs_vclip_time[num] = stof(argv(3));
@@ -100,7 +103,13 @@ void() QS_LoadAssets =
 		else if (w == "powerup")
 			powerups = strcat(powerups, argv(1), "|");
 		else if (w == "pic")
+		{
 			pics = strcat(pics, argv(1), "|");
+			if (n >= 4)
+				hash_add(qs_picsize, argv(1), [stof(argv(2)), stof(argv(3))], EV_VECTOR | HASH_REPLACE);
+		}
+		else if (w == "game")
+			qs_game = stof(argv(1));
 		else if (w == "gun" && n >= 5)
 		{
 			num = stof(argv(1));
@@ -153,7 +162,7 @@ float(string name) QS_HavePic =
 
 float(float vc) QS_HaveVclip =
 {
-	if (vc < 0 || vc >= 100)
+	if (vc < 0 || vc >= 120)
 		return FALSE;
 	return qs_vclip_frames[vc] > 0;
 };
@@ -168,4 +177,10 @@ float(float num) QS_HaveSound =
 string(float num) QS_SoundName =
 {
 	return strcat("qs/", ftos(num), ".wav");
+};
+
+// A HUD picture's size in the 320x200 cockpit layout.
+vector(string name) QS_PicSize =
+{
+	return hash_get(qs_picsize, name, '0 0 0', EV_VECTOR);
 };

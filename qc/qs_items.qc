@@ -28,48 +28,74 @@
 //
 // They spin as Descent's powerup sprites when the asset pack has them.
 
-// The powerup sprite for an item, or "" to keep Quake's model.
-string(entity e) QS_PowerupFor =
+// What a Quake item becomes: the name of its Descent powerup (which is
+// also its sprite), or "" to leave it to Quake.  In Descent II mode about
+// half of the weapons and ammo turn into the Descent II versions, and the
+// biosuit and armours carry Descent II's equipment.
+string(entity e) QS_ItemKind =
 {
 	local string c;
+	local float alt, big;
 
 	c = e.classname;
+	alt = qs_game == 2 && (num_for_edict(e) & 1);
+	big = e.spawnflags & (WEAPON_BIG2 | WEAPON_BIG);
 	if (c == "item_health")
-		return (e.spawnflags & H_MEGA) ? "life" : "shield";
-	if (c == "item_armor1" || c == "item_armor2" || c == "item_armorInv" || c == "item_cells")
-		return "energy";
-	if (c == "item_shells")
-		return (e.spawnflags & WEAPON_BIG2) ? "conc4" : "conc1";
-	if (c == "item_spikes")
-		return "vammo";
-	if (c == "item_rockets")
-		return (e.spawnflags & WEAPON_BIG2) ? "homing4" : "prox";
-	if (c == "item_weapon")
 	{
-		if (e.spawnflags & WEAPON_SHOTGUN)
-			return (e.spawnflags & WEAPON_BIG) ? "conc4" : "conc1";
-		if (e.spawnflags & WEAPON_ROCKET)
-			return (e.spawnflags & WEAPON_BIG) ? "homing4" : "prox";
+		if (e.spawnflags & H_MEGA)
+			return alt ? "shaker" : "life";
+		return "shield";
+	}
+	if (c == "item_armor1")
+		return alt ? "headlight" : "energy";
+	if (c == "item_armor2")
+		return alt ? "converter" : "energy";
+	if (c == "item_armorInv")
+		return alt ? "ammorack" : "energy";
+	if (c == "item_cells")
+		return "energy";
+	if (c == "item_shells" || (c == "item_weapon" && (e.spawnflags & WEAPON_SHOTGUN)))
+	{
+		if (alt)
+			return big ? "flash4" : "flash1";
+		return big ? "conc4" : "conc1";
+	}
+	if (c == "item_spikes" || c == "item_weapon")
+	{
+		if (c == "item_weapon" && (e.spawnflags & WEAPON_ROCKET))
+		{
+			if (big)
+				return alt ? "guided4" : "homing4";
+			return alt ? "smine" : "prox";
+		}
 		return "vammo";
 	}
+	if (c == "item_rockets")
+	{
+		if (big)
+			return alt ? "guided4" : "homing4";
+		return alt ? "smine" : "prox";
+	}
 	if (c == "weapon_supershotgun")
-		return "spread";
+		return alt ? "helix" : "spread";
 	if (c == "weapon_nailgun")
-		return "vulcan";
+		return alt ? "gauss" : "vulcan";
 	if (c == "weapon_supernailgun")
-		return "plasma";
+		return alt ? "phoenix" : "plasma";
 	if (c == "weapon_grenadelauncher")
 		return "laser";
 	if (c == "weapon_rocketlauncher")
-		return "smart";
+		return alt ? "mercury4" : "smart";
 	if (c == "weapon_lightning")
-		return "fusion";
+		return alt ? "omega" : "fusion";
 	if (c == "item_artifact_super_damage")
 		return "quad";
 	if (c == "item_artifact_invulnerability")
 		return "invuln";
 	if (c == "item_artifact_invisibility")
 		return "cloak";
+	if (c == "item_artifact_envirosuit" && qs_game == 2)
+		return "afterburner";
 	if (c == "item_key1")
 		return "keyb";
 	if (c == "item_key2")
@@ -83,7 +109,7 @@ void() QS_PrecachePowerups =
 	local float n, i;
 	local string list;
 
-	list = "life shield energy conc1 conc4 vammo homing1 homing4 prox spread vulcan plasma laser smart fusion quad invuln cloak keyb keyy mega";
+	list = "life shield energy conc1 conc4 vammo homing1 homing4 prox spread vulcan plasma laser smart fusion quad invuln cloak keyb keyy mega gauss helix phoenix omega super converter ammorack afterburner headlight flash1 flash4 guided1 guided4 smine mercury1 mercury4 shaker";
 	n = tokenize(list);
 	for (i = 0; i < n; i++)
 		if (QS_HavePowerup(argv(i)))
@@ -99,7 +125,7 @@ void() QS_ItemLook =
 
 	if (!autocvar_qs_ship)
 		return;
-	pw = QS_PowerupFor(self);
+	pw = QS_ItemKind(self);
 	if (pw == "" || !QS_HavePowerup(pw))
 		return;
 	c = self.origin + (self.mins + self.maxs) * 0.5;
@@ -109,7 +135,8 @@ void() QS_ItemLook =
 	self.scale = 0.5;
 	if (pw == "life" || pw == "shield" || pw == "energy" || pw == "vammo")
 		self.scale = 0.4;
-	if (pw == "quad" || pw == "laser" || pw == "vulcan" || pw == "spread" || pw == "plasma" || pw == "fusion")
+	if (pw == "quad" || pw == "laser" || pw == "vulcan" || pw == "spread" || pw == "plasma" || pw == "fusion"
+		|| pw == "gauss" || pw == "helix" || pw == "phoenix" || pw == "omega")
 		self.scale = 0.55;
 	self.effects = self.effects | EF_FULLBRIGHT;
 };
@@ -153,7 +180,7 @@ float(entity ship, float sw, float n) QS_GiveMissiles =
 	local entity oself;
 
 	have = QS_Missiles(ship, sw);
-	maxn = QS_MissileMax(sw);
+	maxn = QS_MissileMaxFor(ship, sw);
 	if (have >= maxn)
 	{
 		QS_Message(ship, strcat("You can't carry any more ", QS_SecondaryName(sw), "s!"));
@@ -198,13 +225,15 @@ float(entity ship, float pw) QS_GivePrimary =
 	if (ship.qs_owned & (1 << pw))
 	{
 		// Already have it: the vulcan gives its ammo, the others energy.
-		if (pw == PW_VULCAN)
+		if (pw == PW_VULCAN || pw == PW_GAUSS)
 			return QS_GiveVulcanAmmo(ship, 196);
 		return QS_GiveEnergy(ship, QS_BoostAmount(), FALSE);
 	}
 	ship.qs_owned = ship.qs_owned | (1 << pw);
 	QS_Message(ship, strcat(QS_PrimaryName(pw), "!"));
-	if (pw == PW_VULCAN)
+	if (pw == PW_OMEGA)
+		ship.qs_omega = 1;
+	if (pw == PW_VULCAN || pw == PW_GAUSS)
 		ship.qs_vulcan = min(ship.qs_vulcan + 196, QS_VULCAN_MAX);
 	// Descent switches to a newly found weapon if it's better.
 	if (pw > ship.qs_primary)
@@ -219,7 +248,24 @@ float(entity ship, float pw) QS_GivePrimary =
 
 float(entity ship) QS_GiveLaserUpgrade =
 {
-	if (ship.qs_laser >= 3)
+	local entity oself;
+
+	// Descent II's super laser is laser levels 5 and 6.
+	if (qs_game == 2 && ship.qs_laser >= 3 && ship.qs_laser < 5)
+	{
+		ship.qs_laser = ship.qs_laser + 1;
+		QS_Message(ship, strcat("Super boost to laser level ", ftos(ship.qs_laser + 1), "!"));
+		if (ship.qs_primary == PW_LASER)
+		{
+			ship.qs_owned = ship.qs_owned | (1 << PW_SUPERLASER);
+			oself = self;
+			self = ship;
+			QS_SelectPrimary(PW_SUPERLASER, TRUE);
+			self = oself;
+		}
+		return TRUE;
+	}
+	if (ship.qs_laser >= ((qs_game == 2) ? 5 : 3))
 	{
 		if (QS_GiveMissiles(ship, SW_MEGA, 1))
 			return TRUE;
@@ -247,78 +293,104 @@ void(float respawn) QS_ItemTaken =
 
 // Touch function for every item when the toucher is a ship.  Returns FALSE
 // for items it leaves to Quake (keys, the biosuit, sigils).
+// Descent II's equipment: give it once.
+float(entity ship, float flag, string name) QS_GiveEquipment =
+{
+	if (ship.qs_flags & flag)
+	{
+		QS_Message(ship, strcat("You already have the ", name, "!"));
+		return QS_GiveEnergy(ship, QS_BoostAmount(), FALSE);
+	}
+	ship.qs_flags = ship.qs_flags | flag;
+	ship.qs_carryflags = ship.qs_carryflags | flag;
+	QS_Message(ship, strcat(name, "!"));
+	if (flag == QSF_AFTERBURNER)
+		ship.qs_burn = 1;
+	return TRUE;
+};
+
+// Touch function for every item when the toucher is a ship.  Returns FALSE
+// for items it leaves to Quake (keys, the biosuit in Descent 1, sigils).
 float() QS_ItemTouch =
 {
-	local string c;
+	local string k, c;
 	local float got, snd, respawn;
 
 	if (other.health <= 0)
 		return TRUE;
+	k = QS_ItemKind(self);
 	c = self.classname;
+	if (k == "" || k == "keyb" || k == "keyy")
+		return FALSE;
 	got = FALSE;
 	snd = 83;
 	respawn = 30;
 
-	if (c == "item_health")
+	switch (k)
 	{
-		if (self.spawnflags & H_MEGA)
-		{
-			got = QS_GiveShields(other, 100, FALSE);
-			snd = 82;
-			respawn = 120;
-		}
+	case "life":
+		got = QS_GiveShields(other, 100, FALSE);
+		snd = 82;
+		respawn = 120;
+		break;
+	case "shaker":
+		// Descent II: a megahealth also brings an earthshaker.
+		got = QS_GiveShields(other, 100, TRUE);
+		got = QS_GiveMissiles(other, SW_EARTHSHAKER, 1) || got;
+		snd = 82;
+		respawn = 120;
+		break;
+	case "shield":
+		got = QS_GiveShields(other, QS_BoostAmount(), FALSE);
+		snd = 80;
+		respawn = 20;
+		break;
+	case "energy":
+		if (c == "item_armor1")
+			got = QS_GiveEnergy(other, 50, FALSE);
+		else if (c == "item_armor2")
+			got = QS_GiveEnergy(other, 75, FALSE);
+		else if (c == "item_armorInv")
+			got = QS_GiveEnergy(other, 100, FALSE);
 		else
-		{
-			got = QS_GiveShields(other, QS_BoostAmount(), FALSE);
-			snd = 80;
-			respawn = 20;
-		}
-	}
-	else if (c == "item_armor1")
-	{
-		got = QS_GiveEnergy(other, 50, FALSE);
+			got = QS_GiveEnergy(other, (self.spawnflags & WEAPON_BIG2) ? 50 : QS_BoostAmount(), FALSE);
 		snd = 81;
-	}
-	else if (c == "item_armor2")
-	{
-		got = QS_GiveEnergy(other, 75, FALSE);
-		snd = 81;
-	}
-	else if (c == "item_armorInv")
-	{
-		got = QS_GiveEnergy(other, 100, FALSE);
-		snd = 81;
-	}
-	else if (c == "item_cells")
-	{
-		got = QS_GiveEnergy(other, (self.spawnflags & WEAPON_BIG2) ? 50 : QS_BoostAmount(), FALSE);
-		snd = 81;
-	}
-	else if (c == "item_shells" || (c == "item_weapon" && (self.spawnflags & WEAPON_SHOTGUN)))
-		got = QS_GiveMissiles(other, SW_CONCUSSION, (self.spawnflags & (WEAPON_BIG2 | WEAPON_BIG)) ? 4 : 1);
-	else if (c == "item_spikes" || (c == "item_weapon" && (self.spawnflags & WEAPON_SPIKES)))
+		break;
+	case "headlight":
+		got = QS_GiveEquipment(other, QSF_HEADLIGHT, "Headlight");
+		break;
+	case "converter":
+		got = QS_GiveEquipment(other, QSF_CONVERTER, "Energy to shield converter");
+		break;
+	case "ammorack":
+		got = QS_GiveEquipment(other, QSF_AMMORACK, "Ammo rack");
+		break;
+	case "afterburner":
+		got = QS_GiveEquipment(other, QSF_AFTERBURNER, "Afterburner");
+		break;
+	case "conc1": got = QS_GiveMissiles(other, SW_CONCUSSION, 1); break;
+	case "conc4": got = QS_GiveMissiles(other, SW_CONCUSSION, 4); break;
+	case "flash1": got = QS_GiveMissiles(other, SW_FLASH, 1); break;
+	case "flash4": got = QS_GiveMissiles(other, SW_FLASH, 4); break;
+	case "homing4": got = QS_GiveMissiles(other, SW_HOMING, 4); break;
+	case "guided4": got = QS_GiveMissiles(other, SW_GUIDED, 4); break;
+	case "prox": got = QS_GiveMissiles(other, SW_PROXIMITY, 4); break;
+	case "smine": got = QS_GiveMissiles(other, SW_SMARTMINE, 4); break;
+	case "smart": got = QS_GiveMissiles(other, SW_SMART, 1); break;
+	case "mercury4": got = QS_GiveMissiles(other, SW_MERCURY, 4); break;
+	case "vammo":
 		got = QS_GiveVulcanAmmo(other, (self.spawnflags & (WEAPON_BIG2 | WEAPON_BIG)) ? 98 : 49);
-	else if (c == "item_rockets" || (c == "item_weapon" && (self.spawnflags & WEAPON_ROCKET)))
-	{
-		if (self.spawnflags & (WEAPON_BIG2 | WEAPON_BIG))
-			got = QS_GiveMissiles(other, SW_HOMING, 4);
-		else
-			got = QS_GiveMissiles(other, SW_PROXIMITY, 4);
-	}
-	else if (c == "weapon_supershotgun")
-		got = QS_GivePrimary(other, PW_SPREADFIRE);
-	else if (c == "weapon_nailgun")
-		got = QS_GivePrimary(other, PW_VULCAN);
-	else if (c == "weapon_supernailgun")
-		got = QS_GivePrimary(other, PW_PLASMA);
-	else if (c == "weapon_lightning")
-		got = QS_GivePrimary(other, PW_FUSION);
-	else if (c == "weapon_grenadelauncher")
-		got = QS_GiveLaserUpgrade(other);
-	else if (c == "weapon_rocketlauncher")
-		got = QS_GiveMissiles(other, SW_SMART, 1);
-	else if (c == "item_artifact_super_damage")
-	{
+		break;
+	case "spread": got = QS_GivePrimary(other, PW_SPREADFIRE); break;
+	case "helix": got = QS_GivePrimary(other, PW_HELIX); break;
+	case "vulcan": got = QS_GivePrimary(other, PW_VULCAN); break;
+	case "gauss": got = QS_GivePrimary(other, PW_GAUSS); break;
+	case "plasma": got = QS_GivePrimary(other, PW_PLASMA); break;
+	case "phoenix": got = QS_GivePrimary(other, PW_PHOENIX); break;
+	case "fusion": got = QS_GivePrimary(other, PW_FUSION); break;
+	case "omega": got = QS_GivePrimary(other, PW_OMEGA); break;
+	case "laser": got = QS_GiveLaserUpgrade(other); break;
+	case "quad":
 		if (other.qs_quad)
 			got = QS_GiveEnergy(other, QS_BoostAmount(), FALSE);
 		else
@@ -328,9 +400,8 @@ float() QS_ItemTouch =
 			got = TRUE;
 		}
 		respawn = 60;
-	}
-	else if (c == "item_artifact_invulnerability")
-	{
+		break;
+	case "invuln":
 		other.items = other.items | IT_INVULNERABILITY;
 		other.invincible_time = 1;
 		other.invincible_finished = time + 30;
@@ -338,9 +409,8 @@ float() QS_ItemTouch =
 		got = TRUE;
 		snd = 162;
 		respawn = 300;
-	}
-	else if (c == "item_artifact_invisibility")
-	{
+		break;
+	case "cloak":
 		other.items = other.items | IT_INVISIBILITY;
 		other.invisible_time = 1;
 		other.invisible_finished = time + 30;
@@ -348,9 +418,10 @@ float() QS_ItemTouch =
 		got = TRUE;
 		snd = 160;
 		respawn = 300;
-	}
-	else
+		break;
+	default:
 		return FALSE;
+	}
 
 	if (got)
 	{
@@ -391,7 +462,7 @@ void() QS_GiveAll =
 	self.qs_vulcan = QS_VULCAN_MAX;
 	self.qs_energy = QS_MAX_ENERGY;
 	for (sw = 0; sw < QS_NUM_SECONDARIES; sw++)
-		QS_SetMissiles(self, sw, QS_MissileMax(sw));
+		QS_SetMissiles(self, sw, QS_MissileMaxFor(self, sw));
 	self.items = self.items | IT_KEY1 | IT_KEY2;
 	QS_Message(self, "Wowie zowie!");
 };

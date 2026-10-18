@@ -52,15 +52,20 @@ const float QSB_SECONDARY = 8;
 const float QSB_FLARE = 16;
 const float QSB_BOMB = 32;
 const float QSB_REARVIEW = 64;
+const float QSB_AFTERBURNER = 128;   // Descent II
+const float QSB_CONVERTER = 256;     // Descent II: energy to shields
 
 // Primary and secondary weapons (Descent's order).
 enum
 {
-	PW_LASER, PW_VULCAN, PW_SPREADFIRE, PW_PLASMA, PW_FUSION, QS_NUM_PRIMARIES
+	PW_LASER, PW_VULCAN, PW_SPREADFIRE, PW_PLASMA, PW_FUSION,
+	// Descent II's, each sharing a number key with its Descent 1 weapon
+	PW_SUPERLASER, PW_GAUSS, PW_HELIX, PW_PHOENIX, PW_OMEGA, QS_NUM_PRIMARIES
 };
 enum
 {
-	SW_CONCUSSION, SW_HOMING, SW_PROXIMITY, SW_SMART, SW_MEGA, QS_NUM_SECONDARIES
+	SW_CONCUSSION, SW_HOMING, SW_PROXIMITY, SW_SMART, SW_MEGA,
+	SW_FLASH, SW_GUIDED, SW_SMARTMINE, SW_MERCURY, SW_EARTHSHAKER, QS_NUM_SECONDARIES
 };
 
 // Stats the server sends for the cockpit (FTE leaves 32 and up to mods).
@@ -68,9 +73,14 @@ const float STAT_QS_STATE = 32;      // QS_STATE_*
 const float STAT_QS_ENERGY = 33;
 const float STAT_QS_PRIMARY = 34;    // selected primary
 const float STAT_QS_SECONDARY = 35;  // selected secondary
-const float STAT_QS_LASER = 36;      // laser level 0-3, +4 with quad lasers
+const float STAT_QS_LASER = 36;      // laser level 0-5, +8 with quad lasers
 const float STAT_QS_VULCAN = 37;     // vulcan rounds
-const float STAT_QS_MISSILES = 38;   // 38-42: count of each secondary
+const float STAT_QS_AFTERBURNER = 38;  // afterburner charge, 0-1
+const float STAT_QS_OMEGA = 39;      // omega cannon charge, 0-1
+const float STAT_QS_GUIDED = 40;     // entity number of the guided missile being flown
+const float STAT_QS_FLASHED = 41;    // time a flash missile's flash started
+const float STAT_QS_SHAKE = 42;      // time an earthshaker's quake started
+const float STAT_QS_MISSILES = 60;   // 60-69: count of each secondary
 const float STAT_QS_OWNED = 43;      // bit per primary weapon owned
 const float STAT_QS_FLAGS = 44;      // QSF_*
 const float STAT_QS_PRIMREADY = 45;  // time the primary can fire again
@@ -102,6 +112,12 @@ const float QSF_REARVIEW = 32;
 const float QSF_GHOST = 64;          // fly through walls
 const float QSF_TURBO = 128;         // everything at double speed
 const float QSF_ACID = 256;
+// Descent II's equipment.
+const float QSF_AFTERBURNER = 512;   // has the afterburner
+const float QSF_HEADLIGHT = 1024;    // has the headlight
+const float QSF_HEADLIGHT_ON = 2048;
+const float QSF_CONVERTER = 4096;    // has the energy to shield converter
+const float QSF_AMMORACK = 8192;     // has the ammo rack (double missiles)
 
 // Descent's do_physics_sim(): in each 1/64 second step the acceleration is
 // added and then drag takes its share.  A leftover part step is applied
@@ -280,6 +296,7 @@ vector() QS_BasisToAngles =
 // the ship is.  Both must do exactly the same.
 
 float qs_move_isserver;
+float qs_burncharge;             // the afterburner's charge for this command
 
 // Something the ship flew into: let it react (buttons, doors' touch).
 void(entity hit) QS_MoveImpact;
@@ -340,6 +357,10 @@ void(entity ship, float thrustscale, float wiggle, float flags) QS_ShipPhysics =
 
 	makevectors(input_angles);
 	fm = bound(-1, input_movevalues_x / QS_MOVE_SCALE, 1);
+	// Descent II's afterburner: full forward thrust plus up to double
+	// again, while it has charge.
+	if ((input_buttons & QSB_AFTERBURNER) && (flags & QSF_AFTERBURNER) && qs_burncharge > 0)
+		fm = 1 + min(0.5, qs_burncharge) * 2;
 	sm = bound(-1, input_movevalues_y / QS_MOVE_SCALE, 1);
 	um = bound(-1, input_movevalues_z / QS_MOVE_SCALE, 1);
 	accel = QS_ShipAccel(fm, sm, um, thrustscale, 0);

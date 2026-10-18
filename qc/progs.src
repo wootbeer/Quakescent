@@ -14,6 +14,7 @@ weapons.qc
 qs_ship.qc
 qs_cheats.qc
 qs_weapons.qc
+qs_d2.qc
 qs_items.qc
 qs_ick.qc
 world.qc

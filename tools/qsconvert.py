@@ -3,12 +3,14 @@
 qsconvert.py - build qs_descent_assets.pk3 from your own Descent 1 data files.
 
 Quakescent does not ship any Descent data.  This tool reads DESCENT.HOG and
-DESCENT.PIG (registered 1.4/1.5, or the 1.0-1.2 shareware) and writes a
-resource archive for FTEQW holding the cockpit and gauges, powerup and
+DESCENT.PIG (registered 1.4/1.5, or the 1.0-1.2 shareware), or with
+--descent2 Descent II's DESCENT2.HOG, DESCENT2.HAM, GROUPA.PIG and
+DESCENT2.S22, and writes a resource archive for FTEQW holding the cockpit and gauges, powerup and
 effect sprites, weapon and ship models, sounds and fonts the mod uses.
 
 Usage:
     python qsconvert.py <descent dir or DESCENT.PIG> [-o qs_descent_assets.pk3]
+    python qsconvert.py --descent2 <descent ii dir> [-o qs_descent_assets.pk3]
 
 Only the Python 3 standard library is needed.  The Descent file readers are
 in descent_data.py (shared with Doomscent's converter).
@@ -59,6 +61,21 @@ GAUGE_NAMES.update({
 WEAPON_PICTURES = {0: 'wlaser', 11: 'wvulcan', 12: 'wspread', 13: 'wplasma', 14: 'wfusion',
                    8: 'wconc', 15: 'whoming', 16: 'wprox', 17: 'wsmart', 18: 'wmega'}
 
+# Descent II's additions.
+D2_GAUGE_NAMES = {20: 'aftrbrn'}
+D2_WEAPON_PICTURES = {30: 'wsuper', 32: 'wgauss', 33: 'whelix', 34: 'wphoenix', 35: 'womega',
+                      36: 'wflash', 37: 'wguided', 38: 'wsmine', 39: 'wmercury', 40: 'wshaker'}
+D2_WEAPON_MODELS = {30: 'laser5', 31: 'laser6', 36: 'flash', 37: 'guided', 39: 'mercury',
+                    40: 'shaker', 54: 'shakerkid'}
+# Powerup name -> its index in Descent II's powerup table (POWERUP.H).
+D2_POWERUPS = {'life': 0, 'energy': 1, 'shield': 2, 'laser': 3, 'keyb': 4, 'keyr': 5, 'keyy': 6,
+               'conc1': 10, 'conc4': 11, 'quad': 12, 'vulcan': 13, 'spread': 14, 'plasma': 15,
+               'fusion': 16, 'prox': 17, 'homing1': 18, 'homing4': 19, 'smart': 20, 'mega': 21,
+               'vammo': 22, 'cloak': 23, 'invuln': 25, 'gauss': 28, 'helix': 29, 'phoenix': 30,
+               'omega': 31, 'super': 32, 'fullmap': 33, 'converter': 34, 'ammorack': 35,
+               'afterburner': 36, 'headlight': 37, 'flash1': 38, 'flash4': 39, 'guided1': 40,
+               'guided4': 41, 'smine': 42, 'mercury1': 43, 'mercury4': 44, 'shaker': 45}
+
 # Weapon_info id -> model name.  The inner model (the bright core of the
 # lasers and the fusion bolt) is written as <name>_in.
 WEAPON_MODELS = {0: 'laser1', 1: 'laser2', 2: 'laser3', 3: 'laser4', 14: 'fusion',
@@ -86,6 +103,7 @@ class Tables:
         self.weapon_models = {}      # weapon id -> (model, inner model or None)
         self.ship_model = None
         self.cockpit = [0, 0, 0]     # cockpit, rear view, status bar
+        self.hires = {}              # low-res bitmap index -> Descent II's 640x480 one
         self.gun_points = []         # Pyro-GX gun points, Descent units
 
 
@@ -127,6 +145,17 @@ def tables_from_gamedata(gd):
             t.weapon_models[wi] = (model(w[1]), model(w[2]) if w[2] >= 0 else None)
     t.ship_model = model(gd.ship[0])
     t.cockpit = list(gd.cockpits[:3])
+    if hasattr(gd, 'gauges_hires'):
+        # Descent II: the high-resolution cockpit, gauges and pictures.
+        for k in range(3):
+            if len(gd.cockpits) > k + 3:
+                t.hires[gd.cockpits[k]] = gd.cockpits[k + 3]
+        for gi in range(len(gd.gauges)):
+            if gd.gauges[gi] and gd.gauges_hires[gi]:
+                t.hires[gd.gauges[gi]] = gd.gauges_hires[gi]
+        for wi in range(len(gd.weapons2)):
+            if gd.weapons[wi][43] and gd.weapons2[wi][47]:
+                t.hires[gd.weapons[wi][43]] = gd.weapons2[wi][47]
     # player_ship: model_num, expl_vclip_num, mass, drag, max_thrust,
     # reverse_thrust, brakes, wiggle, max_rotthrust, then 8 gun points.
     gp = gd.ship[9:33]
@@ -388,16 +417,27 @@ def md3(name, surfaces):
 # --------------------------------------------------------------------------
 
 class QSConverter:
-    def __init__(self, hog_path, pig_path, out):
+    def __init__(self, hog_path, pig_path, out, ham_path=None, sound_path=None):
         self.hog = dd.read_hog(hog_path)
-        self.pig = dd.Pig(pig_path)
-        pal = self.hog.get('palette.256')
+        self.d2 = ham_path is not None
+        if self.d2:
+            self.pig = dd.Pig2(pig_path, sound_path)
+            palname = 'groupa.256'
+        else:
+            self.pig = dd.Pig(pig_path)
+            palname = 'palette.256'
+        pal = self.hog.get(palname)
         if pal is None:
-            raise dd.DescentError('palette.256 missing from HOG')
+            raise dd.DescentError('%s missing from HOG' % palname)
         self.palette = [(min(255, pal[i * 3] * 255 // 63),
                          min(255, pal[i * 3 + 1] * 255 // 63),
                          min(255, pal[i * 3 + 2] * 255 // 63)) for i in range(256)]
-        if self.pig.gamedata:
+        if self.d2:
+            with open(ham_path, 'rb') as f:
+                self.gd2 = dd.GameData2(f.read())
+            self.tables = tables_from_gamedata(self.gd2)
+            self.source = 'descent2'
+        elif self.pig.gamedata:
             self.tables = tables_from_gamedata(self.pig.gamedata)
             self.source = 'registered'
         elif 'bitmaps.bin' in self.hog:
@@ -408,7 +448,8 @@ class QSConverter:
         self.zip = zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED)
         self.info = ['# Quakescent asset pack, generated by qsconvert.py from %s Descent data.' % self.source,
                      '# Contains data from your own copy of Descent; do not redistribute.',
-                     'source %s' % self.source]
+                     'source %s' % self.source,
+                     'game %d' % (2 if self.d2 else 1)]
         self.report = []
 
     def rgba(self, index, transparent=False):
@@ -423,9 +464,18 @@ class QSConverter:
         return w, h, out
 
     def pic(self, name, index, transparent=False):
-        w, h, data = self.rgba(index, transparent)
+        """A HUD picture.  Its size is given in the 320x200 cockpit layout;
+        Descent II's 640x480 versions are used where there are some, at
+        half by 1/2.4 of their size."""
+        hi = self.tables.hires.get(index)
+        if hi:
+            w, h, data = self.rgba(hi, transparent)
+            sw, sh = w / 2.0, h / 2.4
+        else:
+            w, h, data = self.rgba(index, transparent)
+            sw, sh = w, h
         self.zip.writestr('gfx/qs/%s.png' % name, dd.png(w, h, data))
-        self.info.append('pic %s %d %d' % (name, w, h))
+        self.info.append('pic %s %g %g' % (name, sw, sh))
 
     # -- HUD -------------------------------------------------------------
 
@@ -435,11 +485,16 @@ class QSConverter:
             if t.cockpit[k]:
                 self.pic(name, t.cockpit[k], True)
         n = 0
-        for gi, name in GAUGE_NAMES.items():
+        gauges = dict(GAUGE_NAMES)
+        pictures = dict(WEAPON_PICTURES)
+        if self.d2:
+            gauges.update(D2_GAUGE_NAMES)
+            pictures.update(D2_WEAPON_PICTURES)
+        for gi, name in gauges.items():
             if gi in t.gauges:
                 self.pic(name, t.gauges[gi])
                 n += 1
-        for wi, name in WEAPON_PICTURES.items():
+        for wi, name in pictures.items():
             if wi in t.weapon_pictures:
                 self.pic(name, t.weapon_pictures[wi])
                 n += 1
@@ -526,7 +581,12 @@ class QSConverter:
                                                           frames[0][0], frames[0][1]))
             n += 1
         p = 0
-        for name, vc in POWERUP_VCLIPS.items():
+        if self.d2:
+            powerups = dict((name, self.gd2.powerups[i][0]) for name, i in D2_POWERUPS.items()
+                            if i < len(self.gd2.powerups))
+        else:
+            powerups = POWERUP_VCLIPS
+        for name, vc in powerups.items():
             if vc not in self.tables.vclips:
                 continue
             ftime, frames = self.frames(vc)
@@ -550,7 +610,7 @@ class QSConverter:
         for num, idx in sorted(self.tables.sounds.items()):
             if idx < len(self.pig.sounds):
                 s = self.pig.sounds[idx]
-                self.zip.writestr('sound/qs/%d.wav' % num, dd.wav(self.pig.sound_pcm(s), 11025))
+                self.zip.writestr('sound/qs/%d.wav' % num, dd.wav(self.pig.sound_pcm(s), 22050 if self.d2 else 11025))
                 self.info.append('sound %d' % num)
                 n += 1
         self.report.append('%d sounds' % n)
@@ -599,7 +659,10 @@ class QSConverter:
 
     def convert_models(self):
         done = 0
-        for wi, name in WEAPON_MODELS.items():
+        models = dict(WEAPON_MODELS)
+        if self.d2:
+            models.update(D2_WEAPON_MODELS)
+        for wi, name in models.items():
             pair = self.tables.weapon_models.get(wi)
             if not pair or not pair[0]:
                 continue
@@ -656,10 +719,23 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     ap.add_argument('source', help='Descent directory, or path to DESCENT.PIG')
     ap.add_argument('--hog', help='path to DESCENT.HOG (default: next to the PIG)')
+    ap.add_argument('--descent2', action='store_true',
+                    help='convert Descent II (DESCENT2.HOG, DESCENT2.HAM, GROUPA.PIG, DESCENT2.S22)')
     ap.add_argument('-o', '--output', default='qs_descent_assets.pk3')
     args = ap.parse_args(argv)
 
-    if os.path.isdir(args.source):
+    ham = sounds = None
+    if args.descent2:
+        d = args.source if os.path.isdir(args.source) else os.path.dirname(os.path.abspath(args.source))
+        hog = args.hog or find_file(d, 'descent2.hog')
+        ham = find_file(d, 'descent2.ham')
+        pig = find_file(d, 'groupa.pig')
+        sounds = find_file(d, 'descent2.s22') or find_file(d, 'descent2.s11')
+        for f, name in ((hog, 'DESCENT2.HOG'), (ham, 'DESCENT2.HAM'), (pig, 'GROUPA.PIG'),
+                        (sounds, 'DESCENT2.S22')):
+            if not f:
+                sys.exit('error: %s not found in %s' % (name, d))
+    elif os.path.isdir(args.source):
         pig = find_file(args.source, 'descent.pig')
         hog = args.hog or find_file(args.source, 'descent.hog')
     else:
@@ -672,7 +748,7 @@ def main(argv=None):
 
     tmp = args.output + '.tmp'
     try:
-        c = QSConverter(hog, pig, tmp)
+        c = QSConverter(hog, pig, tmp, ham, sounds)
         c.convert_hud()
         c.convert_fonts()
         c.convert_sprites()

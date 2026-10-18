@@ -1,2 +1,2 @@
-The mod: progs.dat, csprogs.dat, default.cfg, and qs_descent_assets.pk3
-once the launcher has converted your Descent files.
+The mod: progs.dat, csprogs.dat and its configs.  The Descent asset packs
+the launcher makes go in descent1/ and descent2/.

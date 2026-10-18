@@ -35,6 +35,12 @@ vector qs_view_org;
 // Keys the mod adds (see default.cfg).
 float qs_key_bankl, qs_key_bankr, qs_key_fire2, qs_key_flare, qs_key_bomb;
 float qs_key_left, qs_key_right, qs_key_lookup, qs_key_lookdown;
+float qs_key_burn, qs_key_convert;   // Descent II's afterburner and converter
+
+// Flying a guided missile: its own orientation, turned by the mouse at half
+// rate; the ship's is put aside meanwhile.
+float qs_guiding;
+vector qs_ship_fwd, qs_ship_rgt, qs_ship_up;
 
 void(entity hit) QS_MoveImpact = {};
 
@@ -71,12 +77,23 @@ void(float apilevel, string enginename, float engineversion) CSQC_Init =
 	registercommand("+qs_lookdown");
 	registercommand("-qs_lookdown");
 	registercommand("qs_levelship");
+	registercommand("+qs_afterburner");
+	registercommand("-qs_afterburner");
+	registercommand("+qs_convert");
+	registercommand("-qs_convert");
 	registercommand("qs_menu");
 	QS_LoadAssets();
 	QS_HudInit();
 	// Configs saved before the options menu existed don't bind it.
 	if (getkeybind(K_F7) == "")
 		localcmd("bind f7 qs_menu\n");
+	// ...nor Descent II's equipment.
+	if (getkeybind(K_LSHIFT) == "")
+		localcmd("bind shift +qs_afterburner\n");
+	if (getkeybind(104) == "")
+		localcmd("bind h \"impulse 14\"\n");
+	if (getkeybind(103) == "")
+		localcmd("bind g +qs_convert\n");
 };
 
 void(float down) QS_RearViewKey =
@@ -120,6 +137,10 @@ float(string cmd) CSQC_ConsoleCommand =
 	case "-qs_lookup": qs_key_lookup = 0; break;
 	case "+qs_lookdown": qs_key_lookdown = 1; break;
 	case "-qs_lookdown": qs_key_lookdown = 0; break;
+	case "+qs_afterburner": qs_key_burn = 1; break;
+	case "-qs_afterburner": qs_key_burn = 0; break;
+	case "+qs_convert": qs_key_convert = 1; break;
+	case "-qs_convert": qs_key_convert = 0; break;
 	case "qs_menu":
 		if (qs_menu_open)
 			QS_MenuClose();
@@ -164,6 +185,32 @@ float(vector ang, float isdelta) CSQC_Parse_SetAngles =
 	return FALSE;
 };
 
+// Start or stop flying a guided missile.
+void() QS_GuidedCheck =
+{
+	local float g;
+
+	g = getstatf(STAT_QS_GUIDED) != 0;
+	if (g == qs_guiding)
+		return;
+	if (g)
+	{
+		// The missile starts off the way the ship faces.
+		qs_ship_fwd = qs_fwd;
+		qs_ship_rgt = qs_rgt;
+		qs_ship_up = qs_up;
+	}
+	else
+	{
+		qs_fwd = qs_ship_fwd;
+		qs_rgt = qs_ship_rgt;
+		qs_up = qs_ship_up;
+	}
+	qs_guiding = g;
+	qs_pending_yaw = qs_pending_pitch = 0;
+	qs_rotvel = '0 0 0';
+};
+
 // Mouse, turn keys and banking, once per video frame.
 void(float dt) QS_UpdateOrientation =
 {
@@ -187,6 +234,12 @@ void(float dt) QS_UpdateOrientation =
 	}
 	qs_pending_yaw = qs_pending_yaw - yawin;
 	qs_pending_pitch = qs_pending_pitch - pitchin;
+	// Descent II steers guided missiles at half rate.
+	if (qs_guiding)
+	{
+		yawin = yawin / 2;
+		pitchin = pitchin / 2;
+	}
 
 	// Near level flight turn about the world's vertical, so the horizon
 	// stays put; rolled over, about the ship's own axes like Descent.
@@ -248,7 +301,14 @@ void() CSQC_Input_Frame =
 		b = b | QSB_BOMB;
 	if (qs_rearview)
 		b = b | QSB_REARVIEW;
+	if (qs_key_burn)
+		b = b | QSB_AFTERBURNER;
+	if (qs_key_convert)
+		b = b | QSB_CONVERTER;
 	input_buttons = b;
+	// Steering a guided missile, the ship coasts.
+	if (qs_guiding)
+		input_movevalues = '0 0 0';
 };
 
 // Where the ship is now: the server's last word on it plus the movement
@@ -277,6 +337,24 @@ vector() QS_PredictOrigin =
 			getstatf(STAT_QS_FLAGS));
 	}
 	return qs_pred.origin;
+};
+
+// Descent II's headlight, and the earthshaker's quake.
+void() QS_ViewEffects =
+{
+	local float flags, t;
+	local vector a;
+
+	flags = getstatf(STAT_QS_FLAGS);
+	if (flags & QSF_HEADLIGHT_ON)
+		dynamiclight_add(qs_view_org + qs_fwd * 96, 450, '1 0.97 0.88', 0, "", PFLAGS_NOSHADOW);
+	t = time - getstatf(STAT_QS_SHAKE);
+	if (getstatf(STAT_QS_SHAKE) && t >= 0 && t < 2)
+	{
+		a = getproperty(VF_ANGLES);
+		a = a + [QS_CRandom(), QS_CRandom(), QS_CRandom()] * (2 - t) * 2;
+		setproperty(VF_ANGLES, a);
+	}
 };
 
 // The basis turned for the rear view: half a turn about the ship's up.
@@ -325,10 +403,14 @@ void(float vwidth, float vheight, float notmenu) CSQC_UpdateView =
 			qs_basis_init = TRUE;
 			qs_rotvel = '0 0 0';
 		}
+		QS_GuidedCheck();
 		QS_UpdateOrientation(frametime);
 		qs_view_org = QS_PredictOrigin() + QS_VIEW_OFS;
+		if (qs_guiding && (float)getentity(getstatf(STAT_QS_GUIDED), GE_ACTIVE))
+			qs_view_org = getentity(getstatf(STAT_QS_GUIDED), GE_ORIGIN);
 		setproperty(VF_ORIGIN, qs_view_org);
 		setproperty(VF_ANGLES, QS_ViewAngles());
+		QS_ViewEffects();
 		if (getstatf(STAT_QS_FLAGS) & QSF_ACID)
 		{
 			// Descent's acid cheat wobbled the level; here the view wobbles.

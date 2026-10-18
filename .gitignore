@@ -18,3 +18,5 @@ tools/fteqcc*
 /installed.lst
 /dist/
 /quakescent/particles/
+/descent1/
+/descent2/

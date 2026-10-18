@@ -76,6 +76,12 @@ void() QS_StartFrame =
 	{
 		if (!(e.flags & FL_MONSTER) || e.health <= 0)
 			continue;
+		// Descent II's flash missile blinds them for a while.
+		if (e.qs_blinded > time)
+		{
+			e.enemy = world;
+			e.goalentity = world;
+		}
 		if (on && !e.qs_face)
 			QS_IckAttach(e);
 		else if (!on && e.qs_face)

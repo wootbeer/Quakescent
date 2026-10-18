@@ -27,8 +27,19 @@ const float CH_ROBOTSNOFIRE = 10;
 const float CH_GHOST = 11;
 const float CH_TURBO = 12;
 const float CH_ACID = 13;
+const float CH_LAMER = 14;
+const float CH_ACCESSORY = 15;
+const float CH_FULLMAP = 16;
+const float CH_BOUNCY = 17;
+const float CH_HOMING = 18;
+const float CH_KILLROBOTS = 19;
+const float CH_RABID = 20;
+const float CH_GODZILLA = 21;
 
-const float QS_NUM_CODES = 14;
+float() QS_NumCodes =
+{
+	return (qs_game == 2) ? 26 : 14;
+};
 
 string qs_typed;                 // the last few letters typed (zoned)
 float qs_warping;
@@ -48,7 +59,8 @@ void(string s) QS_SetWarpDigits =
 	qs_warpdigits = strzone(s);
 };
 
-string(float i) QS_CheatCode =
+// Descent 1's codes, then Doomscent's extras for both games.
+string(float i) QS_CheatCode1 =
 {
 	switch (i)
 	{
@@ -63,7 +75,6 @@ string(float i) QS_CheatCode =
 	case 8: return "farmerjoe";
 	case 9: return "porgys";
 	case 10: return "ahimsa";
-	// Doomscent's extras, for both games.
 	case 11: return "astral";
 	case 12: return "buggin";
 	case 13: return "bittersweet";
@@ -71,9 +82,78 @@ string(float i) QS_CheatCode =
 	return "";
 };
 
+// Descent II's codes: its old Descent 1 ones (which get you "lamer"),
+// then its own, then the extras.
+string(float i) QS_CheatCode2 =
+{
+	switch (i)
+	{
+	case 0: return "gabbagabbahey";
+	case 1: return "motherlode";
+	case 2: return "currygoat";
+	case 3: return "zingermans";
+	case 4: return "eatangelos";
+	case 5: return "ericaanne";
+	case 6: return "joshuaakira";
+	case 7: return "whammazoom";
+	case 8: return "honestbob";
+	case 9: return "oralgroove";
+	case 10: return "alifalafel";
+	case 11: return "almighty";
+	case 12: return "blueorb";
+	case 13: return "delshiftb";
+	case 14: return "freespace";
+	case 15: return "rockrgrl";
+	case 16: return "wildfire";
+	case 17: return "duddaboo";
+	case 18: return "lpnlizard";
+	case 19: return "imagespace";
+	case 20: return "spaniard";
+	case 21: return "silkwing";
+	case 22: return "godzilla";
+	case 23: return "astral";
+	case 24: return "buggin";
+	case 25: return "bittersweet";
+	}
+	return "";
+};
+
+float(float i) QS_CheatFor2 =
+{
+	if (i < 8)
+		return CH_LAMER;
+	switch (i)
+	{
+	case 8: return CH_WOWIE;
+	case 9: return CH_ALLKEYS;
+	case 10: return CH_ACCESSORY;
+	case 11: return CH_INVUL;
+	case 12: return CH_SHIELDS;
+	case 13: return CH_KILLREACTOR;
+	case 14: return CH_LEVELWARP;
+	case 15: return CH_FULLMAP;
+	case 16: return CH_RAPIDFIRE;
+	case 17: return CH_BOUNCY;
+	case 18: return CH_HOMING;
+	case 19: return CH_ROBOTSNOFIRE;
+	case 20: return CH_KILLROBOTS;
+	case 21: return CH_RABID;
+	case 22: return CH_GODZILLA;
+	case 23: return CH_GHOST;
+	case 24: return CH_TURBO;
+	case 25: return CH_ACID;
+	}
+	return -1;
+};
+
+string(float i) QS_CheatCode =
+{
+	return (qs_game == 2) ? QS_CheatCode2(i) : QS_CheatCode1(i);
+};
+
 float(float i) QS_CheatFor =
 {
-	return i;                        // Descent 1's codes are in cheat order
+	return (qs_game == 2) ? QS_CheatFor2(i) : i;
 };
 
 // How many of the code's first letters were just typed.
@@ -124,7 +204,7 @@ float(float key, float ch) QS_CheatKey =
 	tl = strlen(qs_typed);
 
 	matched = 0;
-	for (i = 0; i < QS_NUM_CODES; i++)
+	for (i = 0; i < QS_NumCodes(); i++)
 	{
 		code = QS_CheatCode(i);
 		cl = strlen(code);

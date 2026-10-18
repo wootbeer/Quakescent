@@ -32,5 +32,11 @@ void() QS_GiveAll;
 .float qs_hits;               // times hit, and the last hit's damage, for
 .float qs_hitdamage;          // the client's jolt
 void() QS_StartFrame;
+void() QS_AfterburnerPre;
+void(float dt) QS_AfterburnerPost;
+void() QS_SteerGuided;
+void() QS_ToggleHeadlight;
+void() QS_D2Frame;
+void() QS_GuidedThink;
 void(entity e) QS_IckKilled;
 void(vector org, vector vel, float damage) QS_SpawnBlood;

@@ -1,8 +1,9 @@
 # Quakescent launcher (Windows).  Quakescent.bat runs this.
 #
-# First run: offers to download FTEQW, converts your Descent files into
-# quakescent\qs_descent_assets.pk3, then starts the game.  Arguments are
-# passed to FTEQW (e.g. .\Quakescent.bat +map e1m1 +skill 2).
+# First run: offers to download FTEQW, converts your Descent files into an
+# asset pack, then starts the game.  -descent2 (Quakescent2.bat) plays in
+# Descent II mode.  Other arguments are passed to FTEQW (e.g.
+# .\Quakescent.bat +map e1m1 +skill 2).
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'   # much faster Invoke-WebRequest
@@ -86,23 +87,56 @@ if (-not (Test-Path (Join-Path $Root 'id1\pak0.pak'))) {
 }
 
 # --- Descent's data -------------------------------------------------------------
-$Assets = Join-Path $Game 'qs_descent_assets.pk3'
+# Descent 1 by default; "-descent2" (Quakescent2.bat) plays in Descent II
+# mode, as does having only Descent II's files.  Each game's pack lives in
+# its own folder (descent1\, descent2\), which FTE loads under the mod.
+$D2 = $false
+$FteArgs = @()
+foreach ($a in $args) {
+    if ($a -ieq '-descent2' -or $a -ieq '--descent2') { $D2 = $true }
+    else { $FteArgs += $a }
+}
+function Have($name) { Test-Path (Join-Path $Data $name) }
+$D1Files = (Have 'DESCENT.HOG') -and (Have 'DESCENT.PIG')
+$D2Files = (Have 'DESCENT2.HOG') -and (Have 'DESCENT2.HAM') -and (Have 'GROUPA.PIG') -and
+           ((Have 'DESCENT2.S22') -or (Have 'DESCENT2.S11'))
+if (-not $D2 -and -not $D1Files -and $D2Files) { $D2 = $true }
+
+# Packs from before the per-game folders.
+$OldPack = Join-Path $Game 'qs_descent_assets.pk3'
+if (Test-Path $OldPack) { Remove-Item $OldPack }
+
+if ($D2) {
+    $PackDir = 'descent2'
+    $ConvArgs = @('--descent2', $Data)
+    $Missing = if ($D2Files) { $null } else { "Copy DESCENT2.HOG, DESCENT2.HAM, GROUPA.PIG and DESCENT2.S22 from your copy of Descent II into $Data\ and run this again." }
+} else {
+    $PackDir = 'descent1'
+    $ConvArgs = @($Data)
+    $Missing = if ($D1Files) { $null } else { "Copy DESCENT.HOG and DESCENT.PIG from your copy of Descent 1 into $Data\ and run this again." }
+}
+$PackPath = Join-Path $Root $PackDir
+if (-not (Test-Path $PackPath)) { New-Item -ItemType Directory $PackPath | Out-Null }
+$Assets = Join-Path $PackPath 'qs_descent_assets.pk3'
 $ConvExe = Join-Path $Root 'tools\qsconvert.exe'
 $ConvPy = Join-Path $Root 'tools\qsconvert.py'
 $converter = if (Test-Path $ConvExe) { Get-Item $ConvExe } else { Get-Item $ConvPy }
+# Reconvert when the converter or Ick Mode's face changes.
+$IckFace = Join-Path $Data 'ickface.png'
 $stale = -not (Test-Path $Assets)
-if (-not $stale) { $stale = $converter.LastWriteTime -gt (Get-Item $Assets).LastWriteTime }
+if (-not $stale) {
+    $built = (Get-Item $Assets).LastWriteTime
+    $stale = $converter.LastWriteTime -gt $built -or ((Test-Path $IckFace) -and (Get-Item $IckFace).LastWriteTime -gt $built)
+}
 if ($stale) {
-    if (-not ((Test-Path (Join-Path $Data 'DESCENT.HOG')) -and (Test-Path (Join-Path $Data 'DESCENT.PIG')))) {
-        Fail "Copy DESCENT.HOG and DESCENT.PIG from your copy of Descent 1 into $Data\ and run this again."
-    }
+    if ($Missing) { Fail $Missing }
     Write-Host "Converting your Descent data..."
     if ($converter.Extension -eq '.exe') {
-        & $ConvExe $Data -o $Assets
+        & $ConvExe @ConvArgs -o $Assets
     } else {
         $py = Find-Python
         if (-not $py) { Fail "Python 3 is needed to convert the Descent data (https://www.python.org/downloads/)." }
-        & $py[0] $py[1..9] $ConvPy $Data -o $Assets
+        & $py[0] $py[1..9] $ConvPy @ConvArgs -o $Assets
     }
     if ($LASTEXITCODE) { Fail "Converting the Descent data failed (see above)." }
 }
@@ -117,4 +151,4 @@ if (-not (Test-Path $Installed)) {
         'source "https://fte.triptohell.info/downloadables.php?game=Q1" "disabled"')
 }
 
-& $Fte -basedir $Root -nohome -game quakescent @args
+& $Fte -basedir $Root -nohome -game $PackDir -game quakescent @FteArgs

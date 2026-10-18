@@ -56,7 +56,7 @@ void(string name, float x, float y) QS_Pic =
 	if (!QS_HavePic(name))
 		return;
 	p = strcat("gfx/qs/", name);
-	sz = drawgetimagesize(p);
+	sz = QS_PicSize(name);
 	drawpic([x * qs_sx, y * qs_sy], p, [sz_x * qs_sx, sz_y * qs_sy], '1 1 1', 1, 0);
 };
 
@@ -69,13 +69,30 @@ void(string name, float x, float y, float l, float r) QS_PicCols =
 	if (!QS_HavePic(name))
 		return;
 	p = strcat("gfx/qs/", name);
-	sz = drawgetimagesize(p);
+	sz = QS_PicSize(name);
 	l = bound(0, l, sz_x);
 	r = bound(l, r, sz_x);
 	if (r <= l)
 		return;
 	drawsubpic([(x + l) * qs_sx, y * qs_sy], [(r - l) * qs_sx, sz_y * qs_sy], p,
 		[l / sz_x, 0], [(r - l) / sz_x, 1], '1 1 1', 1, 0);
+};
+
+// Part of a picture: from row t (in its own height) down.
+void(string name, float x, float y, float t) QS_PicRowsFrom =
+{
+	local string p;
+	local vector sz;
+
+	if (!QS_HavePic(name))
+		return;
+	p = strcat("gfx/qs/", name);
+	sz = QS_PicSize(name);
+	t = bound(0, t, sz_y);
+	if (t >= sz_y)
+		return;
+	drawsubpic([x * qs_sx, (y + t) * qs_sy], [sz_x * qs_sx, (sz_y - t) * qs_sy], p,
+		[0, t / sz_y], [1, 1 - t / sz_y], '1 1 1', 1, 0);
 };
 
 float(string s, float font) QS_TextWidth =
@@ -204,38 +221,74 @@ void() QS_DrawMessages =
 
 string(float pw) QS_PrimaryShort =
 {
-	if (pw == PW_LASER) return "LASER";
-	if (pw == PW_VULCAN) return "VULCAN";
-	if (pw == PW_SPREADFIRE) return "SPREAD";
-	if (pw == PW_PLASMA) return "PLASMA";
-	return "FUSION";
+	switch (pw)
+	{
+	case PW_LASER: return "LASER";
+	case PW_VULCAN: return "VULCAN";
+	case PW_SPREADFIRE: return "SPREAD";
+	case PW_PLASMA: return "PLASMA";
+	case PW_FUSION: return "FUSION";
+	case PW_SUPERLASER: return "SUPER LASER";
+	case PW_GAUSS: return "GAUSS";
+	case PW_HELIX: return "HELIX";
+	case PW_PHOENIX: return "PHOENIX";
+	case PW_OMEGA: return "OMEGA";
+	}
+	return "";
 };
 
 string(float sw) QS_SecondaryShort =
 {
-	if (sw == SW_CONCUSSION) return "CONCSN";
-	if (sw == SW_HOMING) return "HOMING";
-	if (sw == SW_PROXIMITY) return "PROXIM";
-	if (sw == SW_SMART) return "SMART";
-	return "MEGA";
+	switch (sw)
+	{
+	case SW_CONCUSSION: return "CONCSN";
+	case SW_HOMING: return "HOMING";
+	case SW_PROXIMITY: return "PROXIM";
+	case SW_SMART: return "SMART";
+	case SW_MEGA: return "MEGA";
+	case SW_FLASH: return "FLASH";
+	case SW_GUIDED: return "GUIDED";
+	case SW_SMARTMINE: return "SMRTMINE";
+	case SW_MERCURY: return "MERCURY";
+	case SW_EARTHSHAKER: return "SHAKER";
+	}
+	return "";
 };
 
 string(float pw) QS_PrimaryPic =
 {
-	if (pw == PW_LASER) return "wlaser";
-	if (pw == PW_VULCAN) return "wvulcan";
-	if (pw == PW_SPREADFIRE) return "wspread";
-	if (pw == PW_PLASMA) return "wplasma";
-	return "wfusion";
+	switch (pw)
+	{
+	case PW_LASER: return "wlaser";
+	case PW_VULCAN: return "wvulcan";
+	case PW_SPREADFIRE: return "wspread";
+	case PW_PLASMA: return "wplasma";
+	case PW_FUSION: return "wfusion";
+	case PW_SUPERLASER: return "wsuper";
+	case PW_GAUSS: return "wgauss";
+	case PW_HELIX: return "whelix";
+	case PW_PHOENIX: return "wphoenix";
+	case PW_OMEGA: return "womega";
+	}
+	return "";
 };
 
 string(float sw) QS_SecondaryPic =
 {
-	if (sw == SW_CONCUSSION) return "wconc";
-	if (sw == SW_HOMING) return "whoming";
-	if (sw == SW_PROXIMITY) return "wprox";
-	if (sw == SW_SMART) return "wsmart";
-	return "wmega";
+	switch (sw)
+	{
+	case SW_CONCUSSION: return "wconc";
+	case SW_HOMING: return "whoming";
+	case SW_PROXIMITY: return "wprox";
+	case SW_SMART: return "wsmart";
+	case SW_MEGA: return "wmega";
+	case SW_FLASH: return "wflash";
+	case SW_GUIDED: return "wguided";
+	case SW_SMARTMINE: return "wsmine";
+	case SW_MERCURY: return "wmercury";
+	case SW_EARTHSHAKER: return "wshaker";
+	}
+	return "";
 };
 
 float() QS_Shields =
@@ -245,22 +298,32 @@ float() QS_Shields =
 
 void() QS_DrawWeaponBoxes =
 {
-	local float pw, sw, laser;
+	local float pw, sw, laser, ly;
 
 	pw = getstatf(STAT_QS_PRIMARY);
 	sw = getstatf(STAT_QS_SECONDARY);
 	laser = getstatf(STAT_QS_LASER);
 
 	QS_Pic(QS_PrimaryPic(pw), 64, 154);
-	QS_Text(QS_PrimaryShort(pw), 87, 157, QS_FONT_SMALL, COL_WEAPON, 1);
-	if (pw == PW_LASER)
+	if (pw == PW_SUPERLASER)
 	{
-		QS_Text(strcat("LVL: ", ftos((laser & 3) + 1)), 87, 163, QS_FONT_SMALL, COL_WEAPON, 1);
-		if (laser & 4)
-			QS_Text("QUAD", 87, 169, QS_FONT_SMALL, COL_WEAPON, 1);
+		// Two words; Descent II splits it over two lines too.
+		QS_Text("SUPER", 87, 157, QS_FONT_SMALL, COL_WEAPON, 1);
+		QS_Text("LASER", 87, 163, QS_FONT_SMALL, COL_WEAPON, 1);
 	}
-	else if (pw == PW_VULCAN)
+	else
+		QS_Text(QS_PrimaryShort(pw), 87, 157, QS_FONT_SMALL, COL_WEAPON, 1);
+	if (pw == PW_LASER || pw == PW_SUPERLASER)
+	{
+		ly = (pw == PW_SUPERLASER) ? 169 : 163;
+		QS_Text(strcat("LVL: ", ftos((laser & 7) + 1)), 87, ly, QS_FONT_SMALL, COL_WEAPON, 1);
+		if (laser & 8)
+			QS_Text("QUAD", 87, ly + 6, QS_FONT_SMALL, COL_WEAPON, 1);
+	}
+	else if (pw == PW_VULCAN || pw == PW_GAUSS)
 		QS_Text(QS_Pad(getstatf(STAT_QS_VULCAN) * 12.75, 5), 93, 171, QS_FONT_SMALL, COL_AMMO, 1);
+	else if (pw == PW_OMEGA)
+		QS_Text(strcat("CHARGE: ", ftos(floor(getstatf(STAT_QS_OMEGA) * 100)), "%"), 87, 165, QS_FONT_SMALL, COL_WEAPON, 1);
 
 	QS_Pic(QS_SecondaryPic(sw), 234, 154);
 	QS_Text(QS_SecondaryShort(sw), 207, 157, QS_FONT_SMALL, COL_WEAPON, 1);
@@ -278,9 +341,15 @@ void() QS_DrawCockpit =
 	QS_Pic("cockpit", 0, 0);
 
 	// Energy bars empty from the outside in.
-	notenergy = 61 - min(energy, 100) * 61 / 100;
-	QS_PicCols("enrgl", 70, 131, notenergy, 64);
-	QS_PicCols("enrgr", 190, 131, 0, 64 - notenergy);
+	local float barw;
+	local vector bsz;
+	bsz = QS_PicSize("enrgl");
+	barw = bsz_x;
+	if (!barw)
+		barw = 64;
+	notenergy = (61 - min(energy, 100) * 61 / 100) * barw / 64;
+	QS_PicCols("enrgl", (qs_game == 2) ? 68.5 : 70, 131, notenergy, barw);
+	QS_PicCols("enrgr", 190, 131, 0, barw - notenergy);
 
 	QS_Pic("numer", 154, 130);
 	QS_TextRight(ftos(energy), 170, 131.5, QS_FONT_SMALL, COL_ENERGY, 1);
@@ -297,9 +366,25 @@ void() QS_DrawCockpit =
 	QS_Pic("ship", 151, 160);
 
 	// Keys: Quake's silver key lights the blue one, gold the yellow.
-	QS_Pic((flags & QSF_KEY_BLUE) ? "keyb" : "keyb0", 45, 152);
-	QS_Pic((flags & QSF_KEY_YELLOW) ? "keyy" : "keyy0", 44, 162);
-	QS_Pic("keyr0", 43, 172);
+	// Descent II moved them to the right, and put the afterburner gauge
+	// where they were.
+	if (qs_game == 2)
+	{
+		QS_Pic((flags & QSF_KEY_BLUE) ? "keyb" : "keyb0", 267.5, 155.8);
+		QS_Pic((flags & QSF_KEY_YELLOW) ? "keyy" : "keyy0", 268.5, 164.6);
+		QS_Pic("keyr0", 269.5, 173.3);
+		if (flags & QSF_AFTERBURNER)
+		{
+			bsz = QS_PicSize("aftrbrn");
+			QS_PicRowsFrom("aftrbrn", 44, 157, (1 - getstatf(STAT_QS_AFTERBURNER)) * bsz_y);
+		}
+	}
+	else
+	{
+		QS_Pic((flags & QSF_KEY_BLUE) ? "keyb" : "keyb0", 45, 152);
+		QS_Pic((flags & QSF_KEY_YELLOW) ? "keyy" : "keyy0", 44, 162);
+		QS_Pic("keyr0", 43, 172);
+	}
 
 	QS_Pic(((flags & QSF_HOMING_LOCK) && (floor(time * 8) & 1)) ? "homon" : "homof", 7, 171);
 
@@ -318,14 +403,18 @@ void() QS_DrawMinimal =
 	QS_Text(strcat("SHIELD: ", ftos(floor(QS_Shields()))), 4, 178, QS_FONT_SMALL, COL_SHIELD, 1.3);
 	QS_Text(strcat("ENERGY: ", ftos(floor(getstatf(STAT_QS_ENERGY)))), 4, 186, QS_FONT_SMALL, COL_ENERGY, 1.3);
 	p = QS_PrimaryShort(pw);
-	if (pw == PW_LASER)
+	if (pw == PW_LASER || pw == PW_SUPERLASER)
 	{
-		p = strcat(p, " LVL ", ftos((laser & 3) + 1));
-		if (laser & 4)
+		p = strcat(p, " LVL ", ftos((laser & 7) + 1));
+		if (laser & 8)
 			p = strcat(p, " QUAD");
 	}
-	else if (pw == PW_VULCAN)
+	else if (pw == PW_VULCAN || pw == PW_GAUSS)
 		p = strcat(p, ": ", ftos(floor(getstatf(STAT_QS_VULCAN) * 12.75)));
+	else if (pw == PW_OMEGA)
+		p = strcat(p, ": ", ftos(floor(getstatf(STAT_QS_OMEGA) * 100)), "%");
+	if (getstatf(STAT_QS_FLAGS) & QSF_AFTERBURNER)
+		QS_Text(strcat("BURN: ", ftos(floor(getstatf(STAT_QS_AFTERBURNER) * 100)), "%"), 4, 170, QS_FONT_SMALL, COL_ENERGY, 1.3);
 	QS_TextRight(p, 316, 178, QS_FONT_SMALL, COL_WEAPON, 1.3);
 	QS_TextRight(strcat(QS_SecondaryShort(sw), ": ", ftos(getstatf(STAT_QS_MISSILES + sw))),
 		316, 186, QS_FONT_SMALL, COL_WEAPON, 1.3);
@@ -345,10 +434,10 @@ void() QS_DrawReticle =
 	secready = time >= getstatf(STAT_QS_SECREADY) - 0.05 && getstatf(STAT_QS_MISSILES + sw) > 0;
 
 	pbm = primready ? 1 : 0;
-	if (pbm && pw == PW_LASER && (laser & 4))
+	if (pbm && (pw == PW_LASER || pw == PW_SUPERLASER) && (laser & 8))
 		pbm = 2;
 	sbm = secready ? 1 : 0;
-	if (sw != SW_CONCUSSION && sw != SW_HOMING)
+	if (sw != SW_CONCUSSION && sw != SW_HOMING && sw != SW_FLASH && sw != SW_GUIDED && sw != SW_MERCURY)
 		sbm = sbm + 3;
 	else if (sbm && !(getstatf(STAT_QS_MISSILEGUN) & 1))
 		sbm = sbm + 1;
@@ -364,6 +453,17 @@ void() QS_DrawReticle =
 	QS_Pic(strcat("rsec", ftos(sbm)), 160 - 12, 100 + 1);
 };
 
+// A flash missile's dazzle: white, fading over a second and a half.
+void(float w, float h) QS_DrawFlash =
+{
+	local float t;
+
+	t = time - getstatf(STAT_QS_FLASHED);
+	if (!getstatf(STAT_QS_FLASHED) || t < 0 || t > 1.5)
+		return;
+	drawfill('0 0', [w, h], '1 1 1', 0.85 * (1 - t / 1.5), 0);
+};
+
 void(float w, float h) QS_DrawHud =
 {
 	local float flags;
@@ -374,7 +474,12 @@ void(float w, float h) QS_DrawHud =
 
 	if (qs_state == QS_STATE_SHIP)
 	{
-		if (qs_rearview)
+		if (qs_guiding)
+		{
+			QS_TextCenter("GUIDED MISSILE VIEW", 186, QS_FONT_SMALL, COL_MESSAGE, 1);
+			QS_DrawReticle();
+		}
+		else if (qs_rearview)
 		{
 			if (autocvar_qs_cockpit && QS_HavePic("rearview"))
 				QS_Pic("rearview", 0, 0);
@@ -390,5 +495,6 @@ void(float w, float h) QS_DrawHud =
 			QS_DrawReticle();
 		}
 	}
+	QS_DrawFlash(w, h);
 	QS_DrawMessages();
 };

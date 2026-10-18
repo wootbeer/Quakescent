@@ -2,6 +2,10 @@
 
 First version.
 
+- Descent II mode (Quakescent2.bat): Descent II's high-resolution cockpit,
+  sounds, its weapons (super laser, gauss, helix, phoenix, omega; flash,
+  guided, smart mine, mercury, earthshaker), its equipment (afterburner,
+  headlight, energy converter, ammo rack) and its cheat codes.
 - The Pyro-GX in Quake on FTEQW: 6DOF flight with Descent's physics, the
   cockpit and gauges, the reticle, the rear view and the message line.
 - Descent 1's weapons (lasers 1-4 and quad, vulcan, spreadfire, plasma,

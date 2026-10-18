@@ -17,7 +17,10 @@ enum
 {
 	CH_ENABLE, CH_WOWIE, CH_WOWIE2, CH_ALLKEYS, CH_INVUL, CH_CLOAK, CH_SHIELDS,
 	CH_KILLREACTOR, CH_LEVELWARP, CH_RAPIDFIRE, CH_ROBOTSNOFIRE, CH_GHOST,
-	CH_TURBO, CH_ACID
+	CH_TURBO, CH_ACID,
+	// Descent II's
+	CH_LAMER, CH_ACCESSORY, CH_FULLMAP, CH_BOUNCY, CH_HOMING, CH_KILLROBOTS,
+	CH_RABID, CH_GODZILLA
 };
 
 void(entity e, string what, float on) QS_CheatToggleMessage =
@@ -40,7 +43,7 @@ void(float n) QS_GiveAllSecondaries =
 	local float i;
 
 	for (i = 0; i < n; i++)
-		QS_SetMissiles(self, i, QS_MissileMax(i));
+		QS_SetMissiles(self, i, QS_MissileMaxFor(self, i));
 };
 
 // Descent's mega-wowie powerup: every weapon, missiles, full shields and
@@ -123,7 +126,10 @@ void(float num) QS_WarpToLevel =
 
 void(float cheat) QS_DoCheat =
 {
-	if (cheat != CH_ENABLE && !(self.qs_cheats & QSC_ENABLED))
+	local float n;
+
+	// Descent 1 takes no codes until gabbagabbahey; Descent II needs none.
+	if (qs_game != 2 && cheat != CH_ENABLE && !(self.qs_cheats & QSC_ENABLED))
 		return;
 	QS_Sound(self, CHAN_VOICE, 200, 1, ATTN_NORM);
 	switch (cheat)
@@ -134,11 +140,22 @@ void(float cheat) QS_DoCheat =
 		self.qs_cheats = self.qs_cheats | QSC_ENABLED;
 		break;
 	case CH_WOWIE:
-		// Descent 1's: laser, vulcan and spreadfire, the first three
-		// missiles, and quad lasers at level 4.
-		QS_GiveAllPrimaries(3);
-		QS_GiveAllSecondaries(3);
-		self.qs_laser = 3;
+		if (qs_game == 2)
+		{
+			// Descent II's: everything, and the super laser at level 6.
+			QS_GiveAllPrimaries(QS_NUM_PRIMARIES);
+			QS_GiveAllSecondaries(QS_NUM_SECONDARIES);
+			self.qs_laser = 5;
+			self.qs_omega = 1;
+		}
+		else
+		{
+			// Descent 1's: laser, vulcan and spreadfire, the first three
+			// missiles, and quad lasers at level 4.
+			QS_GiveAllPrimaries(3);
+			QS_GiveAllSecondaries(3);
+			self.qs_laser = 3;
+		}
 		self.qs_quad = TRUE;
 		QS_Message(self, "Wowie zowie!");
 		break;
@@ -190,7 +207,7 @@ void(float cheat) QS_DoCheat =
 		self.qs_cheats = self.qs_cheats ^ QSC_RAPIDFIRE;
 		QS_CheatToggleMessage(self, "Rapid fire", self.qs_cheats & QSC_RAPIDFIRE);
 		// Descent 1's hands out everything too.
-		if (self.qs_cheats & QSC_RAPIDFIRE)
+		if ((self.qs_cheats & QSC_RAPIDFIRE) && qs_game != 2)
 			QS_MegaWowie();
 		break;
 	case CH_ROBOTSNOFIRE:
@@ -211,8 +228,47 @@ void(float cheat) QS_DoCheat =
 	case CH_ACID:
 		self.qs_flags = self.qs_flags ^ QSF_ACID;
 		break;
+	case CH_LAMER:
+		// Descent II's answer to its old Descent 1 codes: a cheater gets
+		// nothing.
+		self.health = 1;
+		self.qs_energy = 1;
+		QS_Message(self, "Take that...cheater!");
+		break;
+	case CH_ACCESSORY:
+		self.qs_flags = self.qs_flags | QSF_HEADLIGHT | QSF_CONVERTER | QSF_AFTERBURNER | QSF_AMMORACK;
+		self.qs_carryflags = self.qs_carryflags | QSF_HEADLIGHT | QSF_CONVERTER | QSF_AFTERBURNER | QSF_AMMORACK;
+		self.qs_burn = 1;
+		QS_Message(self, "Accessories!!");
+		break;
+	case CH_FULLMAP:
+		// Quake has no automap to fill in.
+		QS_Message(self, "Full map! (Quake has no map to show)");
+		break;
+	case CH_BOUNCY:
+		self.qs_cheats = self.qs_cheats ^ QSC_BOUNCY;
+		QS_CheatToggleMessage(self, "Bouncing weapons", self.qs_cheats & QSC_BOUNCY);
+		break;
+	case CH_HOMING:
+		self.qs_cheats = self.qs_cheats ^ QSC_HOMING;
+		QS_CheatToggleMessage(self, "Homing weapons", self.qs_cheats & QSC_HOMING);
+		break;
+	case CH_KILLROBOTS:
+		n = QS_KillMonsters();
+		QS_Message(self, strcat(ftos(n), " monsters toasted!"));
+		break;
+	case CH_RABID:
+		self.qs_cheats = self.qs_cheats ^ QSC_RABID;
+		QS_Message(self, (self.qs_cheats & QSC_RABID) ? "Rabid monsters!" : "Kill the player!");
+		break;
+	case CH_GODZILLA:
+		self.qs_cheats = self.qs_cheats ^ QSC_GODZILLA;
+		QS_Message(self, (self.qs_cheats & QSC_GODZILLA) ? "Oh no, there goes Tokyo!" : "What's with all these funny little houses?");
+		break;
 	}
 };
+
+.float qs_rabidnext;
 
 // Rapid fire: a shot every 1/25 second; turbo doubles the guns' speed.
 float(float wait) QS_FireWait =
@@ -224,11 +280,58 @@ float(float wait) QS_FireWait =
 	return wait;
 };
 
+void() FoundTarget;
+
+// Descent II's rabid robots: monsters go for the nearest other monster.
+void() QS_RabidFrame =
+{
+	local entity e, head, best, oself;
+	local float d, bestd;
+
+	if (time < self.qs_rabidnext)
+		return;
+	self.qs_rabidnext = time + 1;
+	oself = self;
+	for (e = nextent(world); e; e = nextent(e))
+	{
+		if (!(e.flags & FL_MONSTER) || e.health <= 0)
+			continue;
+		if (e.enemy && !e.enemy.qs_ship && e.enemy.health > 0)
+			continue;
+		best = world;
+		bestd = 600;
+		head = findradius(e.origin, 600);
+		while (head)
+		{
+			if (head != e && (head.flags & FL_MONSTER) && head.health > 0)
+			{
+				d = vlen(head.origin - e.origin);
+				traceline(e.origin + e.view_ofs, head.origin, MOVE_NOMONSTERS, e);
+				if (d < bestd && trace_fraction == 1)
+				{
+					best = head;
+					bestd = d;
+				}
+			}
+			head = head.chain;
+		}
+		if (best)
+		{
+			self = e;
+			self.enemy = best;
+			FoundTarget();
+			self = oself;
+		}
+	}
+};
+
 // With robot firing off, monsters forget the player.
 void() QS_CheatFrame =
 {
 	local entity e;
 
+	if (self.qs_cheats & QSC_RABID)
+		QS_RabidFrame();
 	if (!(self.qs_cheats & QSC_NOFIRE))
 		return;
 	for (e = nextent(world); e; e = nextent(e))
