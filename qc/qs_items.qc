@@ -7,25 +7,7 @@
     (at your option) any later version.  See LICENSE.
 */
 
-// Quake's pickups as Descent's powerups.
-//
-//   health                  shields (megahealth +100)
-//   armour, cells           energy
-//   shells                  concussion missiles
-//   nails                   vulcan ammo
-//   rockets                 proximity bombs (small box), homing missiles (big)
-//   super shotgun           spreadfire cannon
-//   nailgun                 vulcan cannon
-//   super nailgun           plasma cannon
-//   grenade launcher        laser upgrade (a mega missile once the lasers
-//                           are at level 4)
-//   rocket launcher         smart missile
-//   thunderbolt             fusion cannon
-//   quad damage             quad lasers
-//   pentagram               invulnerability
-//   ring of shadows         cloak
-//   silver / gold key       blue / yellow key
-//
+// Quake's pickups as Descent's powerups (the README has the full list).
 // They spin as Descent's powerup sprites when the asset pack has them.
 
 // What a Quake item becomes: the name of its Descent powerup (which is

@@ -178,15 +178,13 @@ void(string line) QS_PushLine =
 
 	if (line == "")
 		return;
+	if (qs_msg[0])
+		strunzone(qs_msg[0]);
 	for (i = 0; i < 2; i++)
 	{
-		if (qs_msg[i])
-			strunzone(qs_msg[i]);
-		qs_msg[i] = qs_msg[i + 1] ? strzone(qs_msg[i + 1]) : "";
+		qs_msg[i] = qs_msg[i + 1];
 		qs_msgtime[i] = qs_msgtime[i + 1];
 	}
-	if (qs_msg[2])
-		strunzone(qs_msg[2]);
 	qs_msg[2] = strzone(line);
 	qs_msgtime[2] = time;
 };

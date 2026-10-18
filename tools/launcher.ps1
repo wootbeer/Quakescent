@@ -102,10 +102,6 @@ $D2Files = (Have 'DESCENT2.HOG') -and (Have 'DESCENT2.HAM') -and (Have 'GROUPA.P
            ((Have 'DESCENT2.S22') -or (Have 'DESCENT2.S11'))
 if (-not $D2 -and -not $D1Files -and $D2Files) { $D2 = $true }
 
-# Packs from before the per-game folders.
-$OldPack = Join-Path $Game 'qs_descent_assets.pk3'
-if (Test-Path $OldPack) { Remove-Item $OldPack }
-
 if ($D2) {
     $PackDir = 'descent2'
     $ConvArgs = @('--descent2', $Data)
@@ -121,7 +117,7 @@ $Assets = Join-Path $PackPath 'qs_descent_assets.pk3'
 $ConvExe = Join-Path $Root 'tools\qsconvert.exe'
 $ConvPy = Join-Path $Root 'tools\qsconvert.py'
 $converter = if (Test-Path $ConvExe) { Get-Item $ConvExe } else { Get-Item $ConvPy }
-# Reconvert when the converter or Ick Mode's face changes.
+# Reconvert when the converter or data\ickface.png changes.
 $IckFace = Join-Path $Data 'ickface.png'
 $stale = -not (Test-Path $Assets)
 if (-not $stale) {

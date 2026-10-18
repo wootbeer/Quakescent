@@ -712,19 +712,16 @@ class QSConverter:
         """Ick Mode's monster face: data/ickface.png if there is one, else
         tools/ickface.png, else a built-in cartoon face."""
         face = None
-        used = 'built-in'
         if path:
             try:
                 with open(path, 'rb') as f:
                     face = dd.fit_image(*dd.read_png(f.read()), target_h=64)
-                used = os.path.basename(path)
             except (OSError, ValueError, KeyError) as e:
                 print('warning: %s: %s; using the built-in face' % (path, e))
         if face is None:
             face = dd.default_face()
         self.zip.writestr('progs/qs/ickface.spr32', spr32([face]))
         self.info.append('blob ickface %d %d' % (face[0], face[1]))
-        self.report.append('Ick Mode face (%s)' % used)
 
     def finish(self):
         self.zip.writestr('qs/assets.txt', '\n'.join(self.info) + '\n')

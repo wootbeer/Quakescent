@@ -2,9 +2,9 @@
 # Quakescent launcher for Linux.
 # Needs Python 3.  Put Quake's pak0.pak (and pak1.pak) in ./id1/ and
 # DESCENT.HOG / DESCENT.PIG in ./data/ (--descent2: Descent II's
-# DESCENT2.HOG, DESCENT2.HAM, GROUPA.PIG and DESCENT2.S22).  FTEQW is downloaded into ./fte/ on
-# the first run unless FTEQW=/path/to/fteqw64 is set.  Arguments go to FTEQW
-# (e.g. ./quakescent.sh +map e1m1 +skill 2).
+# DESCENT2.HOG, DESCENT2.HAM, GROUPA.PIG and DESCENT2.S22).  FTEQW is
+# downloaded into ./fte/ on the first run unless FTEQW=/path/to/fteqw64 is
+# set.  Arguments go to FTEQW (e.g. ./quakescent.sh +map e1m1 +skill 2).
 set -e
 ROOT=$(cd "$(dirname "$0")" && pwd)
 FTE_VERSION=2026-07-13
@@ -62,11 +62,10 @@ has() { ls "$ROOT/data" 2>/dev/null | grep -qix "$1"; }
 if [ $D2 = 0 ] && ! has descent.pig && has descent2.hog; then
 	D2=1
 fi
-rm -f "$ROOT/quakescent/qs_descent_assets.pk3"      # from before the per-game folders
 if [ $D2 = 1 ]; then
 	PACKDIR=descent2
 	CONV="--descent2"
-	if ! has descent2.hog || ! has descent2.ham || ! has groupa.pig; then
+	if ! has descent2.hog || ! has descent2.ham || ! has groupa.pig || { ! has descent2.s22 && ! has descent2.s11; }; then
 		MISSING="Copy DESCENT2.HOG, DESCENT2.HAM, GROUPA.PIG and DESCENT2.S22 from your copy of Descent II into $ROOT/data/ and run this again."
 	fi
 else

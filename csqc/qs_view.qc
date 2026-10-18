@@ -17,7 +17,6 @@ var float autocvar_qs_levelturn = 1;     // near level, turn about the world's v
 var float autocvar_qs_autolevel = 0;     // roll back to level when not banking
 var float autocvar_qs_bankturns = 0;     // bank into turns
 var float autocvar_qs_predict = 1;
-var float autocvar_qs_debugview = 0;
 
 float qs_state;                  // STAT_QS_STATE this frame
 float qs_basis_init;
@@ -446,9 +445,6 @@ void(float vwidth, float vheight, float notmenu) CSQC_UpdateView =
 	if (qs_state)
 		QS_DrawHud(vwidth, vheight);
 	QS_DrawMenu(vwidth, vheight);
-	if (autocvar_qs_debugview)
-		drawstring('8 40', strcat(vtos(getproperty(VF_ORIGIN)), " ", vtos(getproperty(VF_ANGLES)),
-			" ", ftos(servercommandframe), "/", ftos(clientcommandframe)), '8 8', '1 1 1', 1, 0);
 };
 
 // Descent shows every message on its message line.

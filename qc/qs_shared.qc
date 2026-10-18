@@ -7,9 +7,6 @@
     (at your option) any later version.  See LICENSE.
 */
 
-// && and || stop early, as in C.
-#pragma flag enable logicops
-
 // Constants and helpers shared by the server (progs.dat) and the client
 // (csprogs.dat): the ship's physics, its orientation, and the stats and
 // input bits the two sides use to talk.

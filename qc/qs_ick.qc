@@ -7,11 +7,7 @@
     (at your option) any later version.  See LICENSE.
 */
 
-// Ick Mode (qs_ickmode, as in Doomscent): every monster wears the same face
-// (data/ickface.png, or the one in tools/, made into progs/qs/ickface.spr32
-// by the converter) scaled to the monster's size, bleeds green, and warps
-// out when it dies instead of leaving a corpse.  It can be switched on and
-// off during play.
+// Ick Mode (qs_ickmode): monsters wear a face, bleed green and warp out.
 
 .entity qs_face;
 float qs_ick_next;

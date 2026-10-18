@@ -36,7 +36,6 @@
 .float qs_flags;             // QSF_*
 .float qs_primready, qs_secready, qs_missilegun, qs_fusion;
 .float qs_laserstat;         // qs_laser + 8 * qs_quad, for the cockpit
-.float qs_impulse_pending;
 .float qs_oldbuttons;
 .float qs_buttons;           // input_buttons of the last movement command
 .float qs_carryflags;        // QSF_* cheats brought from the last level
@@ -58,7 +57,6 @@ const float QS_CARRY_FLAGS = 448;    // QSF_GHOST | QSF_TURBO | QSF_ACID
 const float QS_EQUIP_FLAGS = 13824;  // QSF_AFTERBURNER | QSF_HEADLIGHT | QSF_CONVERTER | QSF_AMMORACK
 
 const float QS_VULCAN_MAX = 784;
-const float QS_VULCAN_SCALE = 12.75;     // rounds shown per unit
 
 // Descent's Secondary_ammo_max; Descent II's ammo rack doubles it.
 float(entity e, float sw) QS_MissileMaxFor =
