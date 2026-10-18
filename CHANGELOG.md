@@ -20,6 +20,8 @@ First version.
   (Fast, 286) has them off, since it can't shine without them.
 - Shots' coloured lights are capped, so rapid fire no longer stalls the
   game.
+- Descent II's proximity bomb shows its red mine in the cockpit, not
+  the homing missile.
 - Getting hit knocks the ship around, as in Descent.
 - Ick Mode: monsters wear a face, bleed green and warp out.
 - Lasers and other weapons cast coloured light as they fly, as in Descent.

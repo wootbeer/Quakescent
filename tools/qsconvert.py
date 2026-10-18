@@ -100,6 +100,7 @@ class Tables:
         self.vclips = {}             # vclip number -> (frame time, [bitmap index])
         self.sounds = {}             # sound number -> PIG sound index
         self.weapon_pictures = {}    # weapon id -> bitmap index
+        self.weapon_hires = {}       # weapon id -> Descent II's 640x480 picture
         self.weapon_models = {}      # weapon id -> (model, inner model or None)
         self.ship_model = None
         self.cockpit = [0, 0, 0]     # cockpit, rear view, status bar
@@ -153,9 +154,12 @@ def tables_from_gamedata(gd):
         for gi in range(len(gd.gauges)):
             if gd.gauges[gi] and gd.gauges_hires[gi]:
                 t.hires[gd.gauges[gi]] = gd.gauges_hires[gi]
+        # Per weapon: robot weapons pair some low-resolution pictures
+        # with other weapons' high-resolution ones (21 has the proximity
+        # bomb's with the homing missile's).
         for wi in range(len(gd.weapons2)):
             if gd.weapons[wi][43] and gd.weapons2[wi][47]:
-                t.hires[gd.weapons[wi][43]] = gd.weapons2[wi][47]
+                t.weapon_hires[wi] = gd.weapons2[wi][47]
     # player_ship: model_num, expl_vclip_num, mass, drag, max_thrust,
     # reverse_thrust, brakes, wiggle, max_rotthrust, then 8 gun points.
     gp = gd.ship[9:33]
@@ -480,11 +484,11 @@ class QSConverter:
             out[i * 4:i * 4 + 4] = bytes((r, g, b, 255))
         return w, h, out
 
-    def pic(self, name, index, transparent=False):
+    def pic(self, name, index, transparent=False, hi=None):
         """A HUD picture.  Its size is given in the 320x200 cockpit layout;
         Descent II's 640x480 versions are used where there are some, at
         half by 1/2.4 of their size."""
-        hi = self.tables.hires.get(index)
+        hi = hi or self.tables.hires.get(index)
         if hi:
             w, h, data = self.rgba(hi, transparent)
             sw, sh = w / 2.0, h / 2.4
@@ -513,7 +517,7 @@ class QSConverter:
                 n += 1
         for wi, name in pictures.items():
             if wi in t.weapon_pictures:
-                self.pic(name, t.weapon_pictures[wi])
+                self.pic(name, t.weapon_pictures[wi], hi=t.weapon_hires.get(wi))
                 n += 1
         self.report.append('%d HUD pictures' % n)
 
