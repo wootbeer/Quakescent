@@ -1,0 +1,7 @@
+../build/quakescent/csprogs.dat
+
+csdefs.qc
+../qc/qs_shared.qc
+../qc/qs_assets.qc
+qs_view.qc
+qs_hud.qc

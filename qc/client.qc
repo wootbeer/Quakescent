@@ -71,6 +71,7 @@ void() SetChangeParms =
 	parm7 = self.ammo_cells;
 	parm8 = self.weapon;
 	parm9 = self.armortype * 100;
+	QS_SetChangeParms ();
 };
 
 void() SetNewParms =
@@ -84,6 +85,7 @@ void() SetNewParms =
 	parm6 = 0;
 	parm8 = 1;
 	parm9 = 0;
+	QS_SetNewParms ();
 };
 
 void() DecodeLevelParms =
@@ -103,6 +105,7 @@ void() DecodeLevelParms =
 	self.ammo_cells = parm7;
 	self.weapon = parm8;
 	self.armortype = parm9 * 0.01;
+	QS_DecodeLevelParms ();
 };
 
 /*
@@ -523,6 +526,8 @@ void() PutClientInServer =
 	}
 
 	spawn_tdeath (self.origin, self);
+
+	QS_ShipSpawn ();
 };
 
 
@@ -969,7 +974,7 @@ void() PlayerPreThink =
 	if (self.deadflag == DEAD_DYING)
 		return;	// dying, so do nothing
 
-	if (self.button2)
+	if (self.button2 && !self.qs_ship)
 	{
 		PlayerJump ();
 	}
@@ -1156,7 +1161,10 @@ void() PlayerPostThink =
 		
 // do weapon stuff
 
-	W_WeaponFrame ();
+	if (self.qs_ship)
+		QS_WeaponFrame ();
+	else
+		W_WeaponFrame ();
 
 // check to see if player landed and play landing sound	
 	if ((self.jump_flag < -300) && (self.flags & FL_ONGROUND) && (self.health > 0))

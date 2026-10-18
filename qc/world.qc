@@ -203,6 +203,11 @@ void() worldspawn =
 // player precaches	
 	W_Precache ();			// get weapon precaches
 
+// Quakescent: the Descent asset pack, its precaches, the cockpit's stats
+	QS_LoadAssets ();
+	QS_Precache ();
+	QS_RegisterStats ();
+
 // sounds used from C physics code
 	precache_sound ("demon/dland2.wav");		// landing thud
 	precache_sound ("misc/h2ohit1.wav");		// landing splash

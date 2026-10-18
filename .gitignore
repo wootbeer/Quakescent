@@ -1,0 +1,10 @@
+build/
+__pycache__/
+*.pyc
+*.pk3
+*.pk3.tmp
+data/*
+!data/README.txt
+id1/
+fte/
+tools/fteqcc*

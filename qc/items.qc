@@ -70,6 +70,8 @@ void() PlaceItem =
 		remove(self);
 		return;
 	}
+	QS_ItemLook ();
+	self.mdl = self.model;
 };
 
 /*
@@ -172,6 +174,8 @@ void() health_touch =
 	
 	if (other.classname != "player")
 		return;
+	if (other.qs_ship && QS_ItemTouch ())
+		return;
 	
 	if (self.healtype == 2) // Megahealth?  Ignore max_health...
 	{
@@ -260,6 +264,8 @@ void() armor_touch =
 	if (other.health <= 0)
 		return;
 	if (other.classname != "player")
+		return;
+	if (other.qs_ship && QS_ItemTouch ())
 		return;
 
 	if (self.classname == "item_armor1")
@@ -618,6 +624,10 @@ local entity	stemp;
 local float		best;
 
 	if (other.classname != "player")
+		return;
+	if (other.qs_ship && QS_ItemTouch ())
+		return;
+	if (other.qs_ship && QS_ItemTouch ())
 		return;
 	if (other.health <= 0)
 		return;
@@ -1101,6 +1111,8 @@ local float		best;
 
 	if (other.classname != "player")
 		return;
+	if (other.qs_ship && QS_ItemTouch ())
+		return;
 	if (other.health <= 0)
 		return;
 
@@ -1253,6 +1265,11 @@ void() BackpackTouch =
 	
 	if (other.classname != "player")
 		return;
+	if (other.qs_ship)
+	{
+		QS_BackpackTouch ();
+		return;
+	}
 	if (other.health <= 0)
 		return;
 		
