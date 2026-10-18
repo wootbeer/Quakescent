@@ -352,6 +352,23 @@ def spr32(frames, group_interval=None):
     return bytes(out)
 
 
+# Animations whose fine detail matters (the omega's lightning streaks):
+# enlarged with hard pixel edges, so the engine's texture smoothing keeps
+# them crisp as Descent's pixel-for-pixel drawing did.  vclip -> factor.
+SHARP_VCLIPS = {103: 4}
+
+
+def upscale(w, h, rgba, k):
+    out = bytearray(w * k * h * k * 4)
+    for y in range(h * k):
+        row = (y // k) * w
+        for x in range(w * k):
+            s = (row + x // k) * 4
+            d = (y * w * k + x) * 4
+            out[d:d + 4] = rgba[s:s + 4]
+    return w * k, h * k, bytes(out)
+
+
 def md3_normal(n):
     x, y, z = n
     if x == 0 and y == 0:
@@ -576,6 +593,8 @@ class QSConverter:
         n = 0
         for vc in sorted(self.tables.vclips):
             ftime, frames = self.frames(vc)
+            if self.d2 and vc in SHARP_VCLIPS:
+                frames = [upscale(*f, SHARP_VCLIPS[vc]) for f in frames]
             self.zip.writestr('progs/qs/vc%d.spr32' % vc, spr32(frames))
             self.info.append('vclip %d %d %.4f %d %d' % (vc, len(frames), ftime,
                                                           frames[0][0], frames[0][1]))

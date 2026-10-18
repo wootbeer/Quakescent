@@ -42,8 +42,7 @@ void(vector p, float lit) QS_OmegaBlob =
 	setorigin(qs_omegablob, p);
 	qs_omegablob.frame = floor(random() * qs_omegaframes);
 	qs_omegablob.scale = qs_omegascale;
-	// The frames are grey discs with white streaks; added on, they glow.
-	qs_omegablob.effects = EF_FULLBRIGHT | EF_ADDITIVE;
+	qs_omegablob.effects = EF_FULLBRIGHT;
 	addentity(qs_omegablob);
 	if (lit)
 		dynamiclight_add(p, 110, '0.6 0.75 1', 0, "", PFLAGS_NOSHADOW);
@@ -121,9 +120,10 @@ void() QS_DrawOmega =
 				perturb = n - 1 - i;
 		}
 		g = pos + pv * (perturb * QS_SCALE);
-		// Not right in front of the eye: Descent II's dashboard hides the
-		// first few, and this close they would fill the screen.
-		if (vlen(g - eye) > 8 * QS_SCALE)
+		// Descent II draws them all, the big ones by the gun included
+		// (that's where its lightning shows); only one right at the eye
+		// would fill the screen.
+		if (vlen(g - eye) > 2 * QS_SCALE)
 			QS_OmegaBlob(g, (i % 4) == 1 || i == n - 1);
 		pos = pos + delta;
 	}
