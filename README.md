@@ -3,6 +3,8 @@
 Quake plus Descent: fly the Pyro-GX through Quake's levels with Descent's
 six-degrees-of-freedom flight, cockpit and weapons.
 
+![Flying the Pyro-GX through Quake's E1M3](docs/screenshot.png)
+
 Quakescent is a mod for an unmodified [FTEQW](https://www.fteqw.org/), a
 Quake engine. Quake's monsters, maps and music stay as they are. You become
 Descent's ship:
