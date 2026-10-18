@@ -431,10 +431,11 @@ void() QS_DrawReticle =
 	sw = getstatf(STAT_QS_SECONDARY);
 	laser = getstatf(STAT_QS_LASER);
 	// The ready times come with server frames, a little behind the
-	// client's clock; a weapon ready again within 0.15 seconds (the vulcan,
-	// gauss, plasma...) counts as ready, or its marker would flicker.
-	primready = time >= getstatf(STAT_QS_PRIMREADY) - 0.15;
-	secready = time >= getstatf(STAT_QS_SECREADY) - 0.15 && getstatf(STAT_QS_MISSILES + sw) > 0;
+	// client's clock; a weapon ready again within 0.22 seconds (the vulcan,
+	// gauss, helix, plasma, phoenix, spreadfire) counts as ready, or its
+	// marker would flicker while firing.  Lasers and slower guns still dip.
+	primready = time >= getstatf(STAT_QS_PRIMREADY) - 0.22;
+	secready = time >= getstatf(STAT_QS_SECREADY) - 0.22 && getstatf(STAT_QS_MISSILES + sw) > 0;
 
 	pbm = primready ? 1 : 0;
 	if (pbm && (pw == PW_LASER || pw == PW_SUPERLASER) && (laser & 8))

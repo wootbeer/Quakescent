@@ -349,8 +349,14 @@ void() QS_ViewEffects =
 	local vector a;
 
 	flags = getstatf(STAT_QS_FLAGS);
+	// Descent II's headlight: a spotlight from the ship's nose.
 	if (flags & QSF_HEADLIGHT_ON)
-		dynamiclight_add(qs_view_org + qs_fwd * 96, 450, '1 0.97 0.88', 0, "", PFLAGS_NOSHADOW);
+	{
+		local float l;
+		l = dynamiclight_add(qs_view_org + qs_fwd * 8, 900, '2.4 2.3 2.1', 0, "", 0);
+		dynamiclight_set(l, LFIELD_ANGLES, getproperty(VF_ANGLES));
+		dynamiclight_set(l, LFIELD_FOV, 70);
+	}
 	t = time - getstatf(STAT_QS_SHAKE);
 	if (getstatf(STAT_QS_SHAKE) && t >= 0 && t < 2)
 	{
