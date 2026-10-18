@@ -23,6 +23,12 @@ becomes Descent's ship:
   powerups (see below).
 - **Shootable switches.** Buttons you'd have to press in Quake also fire
   when you shoot them, as in Descent.
+- **Descent's cheat codes** (`gabbagabbahey`, `racerx`, `porgys`...),
+  typed during play. Quake's own cheats (`god`, `noclip`, `impulse 9`)
+  still work too.
+- **Ick Mode**, as in Doomscent: monsters wear a face, bleed green and warp
+  out when they die. Put your own `ickface.png` in `data` to choose the
+  face.
 
 ## Install and play (Windows)
 
@@ -101,8 +107,8 @@ push a tag `v<VERSION>` or run the Release workflow from the Actions tab with
 | Quakescent options | F7 |
 
 **F7** opens Quakescent's options (cockpit, turning, mouse momentum,
-thrust and damage multipliers, mouse speed and invert, and a "bind
-Descent-style keys" reset). Esc is Quake's own menu, with FTE's video, sound
+thrust, weapon damage and damage taken, mouse speed and invert, Ick Mode,
+and a "bind Descent-style keys" reset). Esc is Quake's own menu, with FTE's video, sound
 and key settings. The same settings from the console (`~`):
 
 | Setting | Default | |
@@ -114,6 +120,8 @@ and key settings. The same settings from the console (`~`):
 | `qs_bankturns` | 0 | bank into turns |
 | `qs_thrust` | 1 | thrust multiplier |
 | `qs_damage` | 1 | weapon damage multiplier |
+| `qs_damagetaken` | 1 | damage taken multiplier (1 is Quake's own damage) |
+| `qs_ickmode` | 0 | Ick Mode |
 | `qs_shipbob` | 1 | the ship's gentle bob |
 | `qs_ship` | 1 | 0 plays as Quake's marine (from the next map) |
 
@@ -143,6 +151,31 @@ Mouse speed is FTE's `sensitivity`.
 
 The biosuit and the runes stay as they are. Impulse 255 gives everything
 (outside deathmatch).
+
+## Cheat codes
+
+Type them during play. As in Descent 1, `gabbagabbahey` switches the others
+on first; in multiplayer they need `sv_cheats 1`.
+
+| Code | Effect |
+|---|---|
+| `gabbagabbahey` | Enables the other codes |
+| `scourge` | Wowie zowie: laser, vulcan, spreadfire, quad lasers at level 4, missiles |
+| `bigred` | Super wowie zowie: every weapon and missile |
+| `mitzi` | All keys |
+| `racerx` | Invulnerability on/off |
+| `guile` | Cloak on/off |
+| `twilight` | Full shields |
+| `poboys` | Kills every monster, collects every item, and exits the level |
+| `farmerjoe` | Warp: type two digits, e.g. 23 for E2M3 |
+| `porgys` | Rapid fire on/off (plus everything) |
+| `ahimsa` | Monsters stop attacking you, on/off |
+| `astral` | Ghosty mode: fly through walls, on/off |
+| `buggin` | Turbo mode: double speed, on/off |
+| `bittersweet` | Acid: the view wobbles, on/off |
+
+The last three are Doomscent's additions. Descent II's codes come with
+Descent II mode.
 
 ## Licence
 

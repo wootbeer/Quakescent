@@ -45,6 +45,7 @@ void() QS_MenuOpen;
 void() QS_MenuClose;
 float(float evtype, float key) QS_MenuInput;
 void(float w, float h) QS_DrawMenu;
+float(float key, float ch) QS_CheatKey;
 
 void(float apilevel, string enginename, float engineversion) CSQC_Init =
 {
@@ -139,6 +140,8 @@ float(float evtype, float scanx, float chary, float devid) CSQC_InputEvent =
 {
 	if (qs_menu_open)
 		return QS_MenuInput(evtype, scanx);
+	if (evtype == IE_KEYDOWN && qs_state == QS_STATE_SHIP && QS_CheatKey(scanx, chary))
+		return TRUE;
 	if (evtype == IE_MOUSEDELTA && qs_state == QS_STATE_SHIP && qs_basis_init)
 	{
 		qs_pending_yaw = qs_pending_yaw + scanx * cvar("sensitivity") * cvar("m_yaw");
@@ -259,7 +262,8 @@ vector() QS_PredictOrigin =
 	{
 		if (!getinputstate(i))
 			continue;
-		QS_ShipPhysics(qs_pred, cvar("qs_thrust") ? cvar("qs_thrust") : 1, cvar("qs_shipbob"));
+		QS_ShipPhysics(qs_pred, cvar("qs_thrust") ? cvar("qs_thrust") : 1, cvar("qs_shipbob"),
+			getstatf(STAT_QS_FLAGS));
 	}
 	return qs_pred.origin;
 };
@@ -313,6 +317,16 @@ void(float vwidth, float vheight, float notmenu) CSQC_UpdateView =
 		qs_view_org = QS_PredictOrigin() + QS_VIEW_OFS;
 		setproperty(VF_ORIGIN, qs_view_org);
 		setproperty(VF_ANGLES, QS_ViewAngles());
+		if (getstatf(STAT_QS_FLAGS) & QSF_ACID)
+		{
+			// Descent's acid cheat wobbled the level; here the view wobbles.
+			local vector a;
+			a = QS_ViewAngles();
+			a_x = a_x + sin(time * 2.3) * 4;
+			a_z = a_z + sin(time * 1.7) * 8;
+			setproperty(VF_ANGLES, a);
+			setproperty(VF_AFOV, cvar("fov") + sin(time * 1.3) * 15);
+		}
 		addentities(MASK_ENGINE);
 	}
 	else

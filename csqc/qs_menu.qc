@@ -15,7 +15,7 @@ float qs_menu_open;
 float qs_menu_sel;
 float qs_menu_paused;
 
-const float QS_MENU_ITEMS = 13;
+const float QS_MENU_ITEMS = 15;
 
 void() QS_MenuClose;
 
@@ -31,11 +31,13 @@ string(float i) QS_MenuLabel =
 	case 5: return "Ship bob";
 	case 6: return "Thrust";
 	case 7: return "Weapon damage";
-	case 8: return "Mouse speed";
-	case 9: return "Invert mouse";
-	case 10: return "Ship (next level)";
-	case 11: return "Bind Descent-style keys";
-	case 12: return "Done";
+	case 8: return "Damage taken";
+	case 9: return "Mouse speed";
+	case 10: return "Invert mouse";
+	case 11: return "Ick Mode";
+	case 12: return "Ship (next level)";
+	case 13: return "Bind Descent-style keys";
+	case 14: return "Done";
 	}
 	return "";
 };
@@ -57,9 +59,11 @@ string(float i) QS_MenuValue =
 	case 5: return QS_OnOff(cvar("qs_shipbob"));
 	case 6: return strcat("x", ftos(cvar("qs_thrust")));
 	case 7: return strcat("x", ftos(cvar("qs_damage")));
-	case 8: return ftos(cvar("sensitivity"));
-	case 9: return QS_OnOff(cvar("m_pitch") < 0);
-	case 10: return cvar("qs_ship") ? "Pyro-GX" : "Quake marine";
+	case 8: return strcat("x", ftos(cvar("qs_damagetaken")));
+	case 9: return ftos(cvar("sensitivity"));
+	case 10: return QS_OnOff(cvar("m_pitch") < 0);
+	case 11: return QS_OnOff(cvar("qs_ickmode"));
+	case 12: return cvar("qs_ship") ? "Pyro-GX" : "Quake marine";
 	}
 	return "";
 };
@@ -87,17 +91,19 @@ void(float i, float dir) QS_MenuChange =
 	case 5: QS_Toggle("qs_shipbob"); break;
 	case 6: QS_Step("qs_thrust", 0.25, 0.25, 4, dir ? dir : 1); break;
 	case 7: QS_Step("qs_damage", 0.25, 0.25, 4, dir ? dir : 1); break;
-	case 8: QS_Step("sensitivity", 0.5, 0.5, 30, dir ? dir : 1); break;
-	case 9: cvar_set("m_pitch", ftos(-cvar("m_pitch"))); break;
-	case 10: QS_Toggle("qs_ship"); break;
-	case 11:
+	case 8: QS_Step("qs_damagetaken", 0.1, 0.1, 4, dir ? dir : 1); break;
+	case 9: QS_Step("sensitivity", 0.5, 0.5, 30, dir ? dir : 1); break;
+	case 10: cvar_set("m_pitch", ftos(-cvar("m_pitch"))); break;
+	case 11: QS_Toggle("qs_ickmode"); break;
+	case 12: QS_Toggle("qs_ship"); break;
+	case 13:
 		if (dir == 0)
 		{
 			localcmd("exec qs_keys.cfg\n");
 			QS_PushMessage("Descent-style keys bound");
 		}
 		break;
-	case 12:
+	case 14:
 		if (dir == 0)
 			QS_MenuClose();
 		break;

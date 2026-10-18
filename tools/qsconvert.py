@@ -620,6 +620,26 @@ class QSConverter:
             self.info.append('gun %d %.3f %.3f %.3f' % ((k,) + g))
         self.report.append('%d models' % done)
 
+    # -- Ick Mode --------------------------------------------------------
+
+    def convert_ickface(self, path):
+        """Ick Mode's monster face: data/ickface.png if there is one, else
+        tools/ickface.png, else a built-in cartoon face."""
+        face = None
+        used = 'built-in'
+        if path:
+            try:
+                with open(path, 'rb') as f:
+                    face = dd.fit_image(*dd.read_png(f.read()), target_h=64)
+                used = os.path.basename(path)
+            except (OSError, ValueError, KeyError) as e:
+                print('warning: %s: %s; using the built-in face' % (path, e))
+        if face is None:
+            face = dd.default_face()
+        self.zip.writestr('progs/qs/ickface.spr32', spr32([face]))
+        self.info.append('blob ickface %d %d' % (face[0], face[1]))
+        self.report.append('Ick Mode face (%s)' % used)
+
     def finish(self):
         self.zip.writestr('qs/assets.txt', '\n'.join(self.info) + '\n')
         self.zip.close()
@@ -658,6 +678,11 @@ def main(argv=None):
         c.convert_sprites()
         c.convert_sounds()
         c.convert_models()
+        here = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+        face = find_file(os.path.dirname(os.path.abspath(pig)), 'ickface.png')
+        if not face and os.path.exists(os.path.join(here, 'ickface.png')):
+            face = os.path.join(here, 'ickface.png')
+        c.convert_ickface(face)
         c.finish()
     except dd.DescentError as e:
         if os.path.exists(tmp):

@@ -105,8 +105,7 @@ def main(argv=None):
     for p in (progs, csprogs):
         if os.path.dirname(p) != out:
             shutil.copy2(p, out)
-    for f in os.listdir(os.path.join(ROOT, 'mod')):
-        shutil.copy2(os.path.join(ROOT, 'mod', f), out)
+    shutil.copytree(os.path.join(ROOT, 'mod'), out, dirs_exist_ok=True)
     # Line-number files are only for debugging.
     for f in ('progs.lno', 'csprogs.lno'):
         p = os.path.join(ROOT, 'build', 'quakescent', f)

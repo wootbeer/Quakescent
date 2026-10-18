@@ -47,6 +47,7 @@ def main():
         'tools/qsconvert.py': 'tools/qsconvert.py',
         'tools/descent_data.py': 'tools/descent_data.py',
         'tools/LICENSE': 'tools/LICENSE',
+        'tools/ickface.png': 'tools/ickface.png',
     }
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
         for arc, rel in files.items():
@@ -55,11 +56,17 @@ def main():
                 info.external_attr = 0o100755 << 16
             with open(os.path.join(root, rel), 'rb') as f:
                 z.writestr(info, f.read(), zipfile.ZIP_DEFLATED)
-        for f in ('progs.dat', 'csprogs.dat', 'default.cfg'):
+        for f in ('progs.dat', 'csprogs.dat'):
             z.write(os.path.join(game, f), name + '/quakescent/' + f)
-        for d in ('qc', 'csqc', 'mod'):
-            for f in sorted(os.listdir(os.path.join(root, d))):
-                z.write(os.path.join(root, d, f), '%s/src/%s/%s' % (name, d, f))
+        for d, _, fs in os.walk(os.path.join(root, 'mod')):
+            for f in fs:
+                rel = os.path.relpath(os.path.join(d, f), os.path.join(root, 'mod'))
+                z.write(os.path.join(d, f), name + '/quakescent/' + rel.replace(os.sep, '/'))
+        for top in ('qc', 'csqc', 'mod'):
+            for d, _, fs in os.walk(os.path.join(root, top)):
+                for f in sorted(fs):
+                    rel = os.path.relpath(os.path.join(d, f), root).replace(os.sep, '/')
+                    z.write(os.path.join(d, f), '%s/src/%s' % (name, rel))
         z.write(os.path.join(root, 'tools', 'build.py'), name + '/src/tools/build.py')
         if args.exe:
             z.write(args.exe, name + '/tools/qsconvert.exe')

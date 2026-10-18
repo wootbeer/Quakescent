@@ -289,6 +289,8 @@ void() QS_ProjectileTouch =
 	dmg = self.qs_dmg * autocvar_qs_damage;
 	if (other.takedamage)
 	{
+		if (other.flags & FL_MONSTER)
+			SpawnBlood(self.origin, self.velocity * 0.2, min(dmg, 30));
 		T_Damage(other, self, self.owner, dmg);
 		vc = self.qs_robothitvc;
 	}
@@ -706,7 +708,7 @@ void() QS_FirePrimaryHeld =
 			}
 			self.qs_energy = self.qs_energy - ws_energy;
 		}
-		self.qs_nextprimary = self.qs_nextprimary + ws_wait;
+		self.qs_nextprimary = self.qs_nextprimary + QS_FireWait(ws_wait);
 		QS_FirePrimaryOnce(pw, id, 1);
 	}
 	self.qs_primready = self.qs_nextprimary;
@@ -753,7 +755,7 @@ void(float held) QS_HandleFusion =
 		self.qs_fusioncharging = FALSE;
 		self.qs_fusion = 0;
 		QS_WeaponStats(14);
-		self.qs_nextprimary = time + ws_wait;
+		self.qs_nextprimary = time + QS_FireWait(ws_wait);
 		self.qs_primready = self.qs_nextprimary;
 		QS_FirePrimaryOnce(PW_FUSION, 14, mult);
 	}
@@ -788,7 +790,7 @@ void(float sw) QS_FireSecondary =
 	id = QS_SecondaryWeaponId(sw);
 	QS_WeaponStats(id);
 	QS_SetMissiles(self, sw, QS_Missiles(self, sw) - 1);
-	self.qs_nextsecondary = time + ws_wait;
+	self.qs_nextsecondary = time + QS_FireWait(ws_wait);
 	self.qs_secready = self.qs_nextsecondary;
 
 	if (sw == SW_CONCUSSION || sw == SW_HOMING)
@@ -811,7 +813,7 @@ void() QS_FireFlare =
 	QS_WeaponStats(9);
 	if (self.qs_energy < ws_energy)
 		return;
-	self.qs_nextflare = time + ws_wait;
+	self.qs_nextflare = time + QS_FireWait(ws_wait);
 	self.qs_energy = self.qs_energy - ws_energy;
 	QS_FireFromGun(9, 6, 0, 0, TRUE, 1);
 };
@@ -948,6 +950,7 @@ void() QS_WeaponFrame =
 		self.qs_flags = self.qs_flags - (self.qs_flags & QSF_REARVIEW);
 	self.qs_oldbuttons = buttons;
 
+	QS_CheatFrame();
 	QS_UpdateStats();
 };
 
@@ -976,6 +979,8 @@ void() QS_Precache =
 		precache_model("progs/qs/sprdblob.spr32");
 	if (QS_HaveModel("plasblob"))
 		precache_model("progs/qs/plasblob.spr32");
+	if (QS_HaveModel("ickface"))
+		precache_model("progs/qs/ickface.spr32");
 	QS_PrecachePowerups();
 	// Quake's stand-ins when the asset pack is missing.
 	precache_model("progs/w_spike.mdl");

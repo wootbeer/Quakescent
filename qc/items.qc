@@ -421,6 +421,8 @@ void() weapon_touch =
 
 	if (!(other.flags & FL_CLIENT))
 		return;
+	if (other.qs_ship && QS_ItemTouch ())
+		return;
 
 // if the player was using his best weapon, change up to the new one if better		
 	stemp = self;
@@ -624,8 +626,6 @@ local entity	stemp;
 local float		best;
 
 	if (other.classname != "player")
-		return;
-	if (other.qs_ship && QS_ItemTouch ())
 		return;
 	if (other.qs_ship && QS_ItemTouch ())
 		return;

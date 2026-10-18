@@ -95,6 +95,11 @@ const float QSF_KEY_BLUE = 4;        // Quake's silver key
 const float QSF_KEY_YELLOW = 8;      // Quake's gold key
 const float QSF_HOMING_LOCK = 16;    // a homing missile is after us
 const float QSF_REARVIEW = 32;
+// Cheats the client needs to know about: its prediction must fly the same
+// way, and acid wobbles its view.
+const float QSF_GHOST = 64;          // fly through walls
+const float QSF_TURBO = 128;         // everything at double speed
+const float QSF_ACID = 256;
 
 // Descent's do_physics_sim(): in each 1/64 second step the acceleration is
 // added and then drag takes its share.  A leftover part step is applied
@@ -277,11 +282,16 @@ float qs_move_isserver;
 // Something the ship flew into: let it react (buttons, doors' touch).
 void(entity hit) QS_MoveImpact;
 
-void(entity ship, float dt) QS_FlyMove =
+void(entity ship, float dt, float ghost) QS_FlyMove =
 {
 	local float bump, timeleft;
 	local vector end;
 
+	if (ghost)
+	{
+		setorigin(ship, ship.origin + ship.velocity * dt);
+		return;
+	}
 	timeleft = dt;
 	for (bump = 0; bump < 4; bump++)
 	{
@@ -310,8 +320,9 @@ void(entity ship, float dt) QS_FlyMove =
 	}
 };
 
-// Run one movement command (the input_* globals) for ship.
-void(entity ship, float thrustscale, float wiggle) QS_ShipPhysics =
+// Run one movement command (the input_* globals) for ship.  flags are its
+// QSF_* (the ghost and turbo cheats change how it flies).
+void(entity ship, float thrustscale, float wiggle, float flags) QS_ShipPhysics =
 {
 	local float dt, fm, sm, um;
 	local vector accel;
@@ -321,6 +332,9 @@ void(entity ship, float thrustscale, float wiggle) QS_ShipPhysics =
 		return;
 	if (dt > 0.1)
 		dt = 0.1;
+	// Descent's turbo cheat doubles the game's clock.
+	if (flags & QSF_TURBO)
+		dt = dt * 2;
 
 	makevectors(input_angles);
 	fm = bound(-1, input_movevalues_x / QS_MOVE_SCALE, 1);
@@ -330,5 +344,5 @@ void(entity ship, float thrustscale, float wiggle) QS_ShipPhysics =
 	if (wiggle)
 		accel = accel + QS_ShipWiggle(input_servertime);
 	ship.velocity = QS_SimulateDrag(ship.velocity, accel, QS_SHIP_DRAG, dt);
-	QS_FlyMove(ship, dt);
+	QS_FlyMove(ship, dt, flags & QSF_GHOST);
 };

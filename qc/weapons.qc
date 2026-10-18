@@ -136,7 +136,7 @@ SpawnBlood
 */
 void(vector org, vector vel, float damage) SpawnBlood =
 {
-	particle (org, vel*0.1, 73, damage*2);
+	QS_SpawnBlood (org, vel, damage);
 };
 
 /*

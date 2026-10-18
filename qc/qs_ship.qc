@@ -14,10 +14,6 @@
 // Shields are the player's health (up to 200); energy, weapons and
 // missiles are the fields below.  Quake's armour isn't used.
 
-var float autocvar_qs_thrust = 1;        // thrust multiplier (1 = Descent's)
-var float autocvar_qs_shipbob = 1;       // Descent's gentle bob
-var float autocvar_qs_damage = 1;        // weapon damage multiplier
-var float autocvar_qs_ship = 1;          // 0: play as Quake's marine instead
 
 .float qs_ship;              // flying the Pyro-GX
 .float qs_state;             // STAT_QS_STATE
@@ -35,6 +31,16 @@ var float autocvar_qs_ship = 1;          // 0: play as Quake's marine instead
 .float qs_impulse_pending;
 .float qs_oldbuttons;
 .float qs_buttons;           // input_buttons of the last movement command
+.float qs_carryflags;        // QSF_* cheats brought from the last level
+
+// Cheats only the server needs to know about (see qs_cheats.qc).
+.float qs_cheats;
+const float QSC_ENABLED = 1;
+const float QSC_RAPIDFIRE = 2;
+const float QSC_NOFIRE = 4;
+const float QSC_GOD = 8;
+// ...and the QSF_* flags that carry over to the next level.
+const float QS_CARRY_FLAGS = 448;    // QSF_GHOST | QSF_TURBO | QSF_ACID
 
 const float QS_VULCAN_MAX = 784;
 const float QS_VULCAN_SCALE = 12.75;     // rounds shown per unit
@@ -89,9 +95,13 @@ void(entity e, float ch, float num, float vol, float attn) QS_Sound =
 		sound(e, ch, QS_SoundName(num), vol, attn);
 };
 
+float qs_quiet;                  // no messages (the reactor cheat's sweep)
+
 // A message on the player's message line (the cockpit draws prints there).
 void(entity e, string msg) QS_Message =
 {
+	if (qs_quiet)
+		return;
 	sprint(e, strcat(msg, "\n"));
 };
 
@@ -175,6 +185,15 @@ void() QS_WaterCheck =
 
 void() QS_ShipCommand =
 {
+	// While the server is turning the ship (spawning, teleporters), its
+	// angles win over the client's until the client has taken them.
+	if (self.fixangle)
+	{
+		input_angles = [-self.angles_x * 3, self.angles_y, self.angles_z];
+		// Send the angle itself, not a change from the client's view: the
+		// ship's view isn't the engine's.
+		self.fixangle = 3;
+	}
 	self.v_angle = input_angles;
 	self.angles = [-input_angles_x / 3, input_angles_y, input_angles_z];
 	self.flags = self.flags - (self.flags & FL_ONGROUND);
@@ -184,10 +203,11 @@ void() QS_ShipCommand =
 		self.velocity = '0 0 0';
 
 	qs_move_isserver = TRUE;
-	QS_ShipPhysics(self, autocvar_qs_thrust, autocvar_qs_shipbob);
+	QS_ShipPhysics(self, autocvar_qs_thrust, autocvar_qs_shipbob, self.qs_flags);
 	qs_move_isserver = FALSE;
 
-	touchtriggers();
+	if (!(self.qs_flags & QSF_GHOST))
+		touchtriggers();
 	QS_WaterCheck();
 };
 
@@ -261,7 +281,11 @@ void() QS_ShipSpawn =
 	self.velocity = '0 0 0';
 	self.qs_fusion = 0;
 	self.qs_primready = self.qs_secready = time;
-	self.qs_flags = 0;
+	self.qs_flags = self.qs_carryflags;
+	if (self.qs_cheats & QSC_GOD)
+		self.flags = self.flags | FL_GODMODE;
+	if (self.qs_cheats & QSC_NOFIRE)
+		self.flags = self.flags | FL_NOTARGET;
 	if (QS_HaveModel("pyro"))
 		setmodel(self, "progs/qs/pyro.md3");
 	setsize(self, VEC_HULL_MIN, VEC_HULL_MAX);
@@ -302,6 +326,7 @@ void() QS_SetChangeParms =
 	parm18 = self.qs_mega;
 	parm19 = self.qs_primary + self.qs_secondary * 16;
 	parm20 = 1;                      // the parms hold a ship
+	parm21 = self.qs_cheats | (self.qs_flags & QS_CARRY_FLAGS);
 };
 
 void() QS_SetNewParms =
@@ -315,6 +340,7 @@ void() QS_SetNewParms =
 	parm15 = parm16 = parm17 = parm18 = 0;
 	parm19 = PW_LASER + SW_CONCUSSION * 16;
 	parm20 = 1;
+	parm21 = 0;
 };
 
 void() QS_DecodeLevelParms =
@@ -335,6 +361,8 @@ void() QS_DecodeLevelParms =
 	self.qs_prox = parm16;
 	self.qs_smart = parm17;
 	self.qs_mega = parm18;
+	self.qs_cheats = parm21 & 15;
+	self.qs_carryflags = parm21 & QS_CARRY_FLAGS;
 	self.qs_primary = parm19 & 15;
 	self.qs_secondary = floor(parm19 / 16) & 15;
 	if (!(self.qs_owned & (1 << self.qs_primary)))

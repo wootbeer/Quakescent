@@ -104,6 +104,7 @@ void(entity targ, entity attacker) Killed =
 
 	monster_death_use();
 	self.th_die ();
+	QS_IckKilled (self);
 	
 	self = oself;
 };
@@ -126,6 +127,10 @@ void(entity targ, entity inflictor, entity attacker, float damage) T_Damage=
 
 	if (!targ.takedamage)
 		return;
+
+// Quakescent: the damage taken setting
+	if (targ.qs_ship)
+		damage = damage * autocvar_qs_damagetaken;
 
 // used by buttons and triggers to set activator for target firing
 	damage_attacker = attacker;
