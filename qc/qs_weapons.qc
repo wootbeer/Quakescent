@@ -412,6 +412,30 @@ void() QS_FlareTouch =
 	self.touch = SUB_Null;
 };
 
+// Descent's weapons light up the walls around them as they fly (their
+// lightcast): a coloured realtime light that moves with the bolt.
+void(entity p, float id) QS_ProjectileLight =
+{
+	local vector c;
+	local float r;
+
+	r = 150;
+	if (id == 0) c = '1 0.25 0.2';              // laser 1: red
+	else if (id == 1) c = '0.9 0.3 1';          // laser 2: purple
+	else if (id == 2) c = '0.3 0.5 1';          // laser 3: blue
+	else if (id == 3) c = '0.3 1 0.3';          // laser 4: green
+	else if (id == 12) c = '0.4 0.6 1';         // spreadfire
+	else if (id == 13 || id == 19) c = '0.5 1 0.4';  // plasma, smart blobs
+	else if (id == 14) { c = '0.8 0.5 1'; r = 220; } // fusion
+	else if (id == 9) { c = '1 0.8 0.5'; r = 300; }  // flare
+	else if (id == 8 || id == 15 || id == 17 || id == 18) { c = '1 0.6 0.3'; r = 120; }  // missiles
+	else
+		return;
+	p.pflags = PFLAGS_FULLDYNAMIC | PFLAGS_NOSHADOW;
+	p.color = c;
+	p.light_lev = r;
+};
+
 entity(float id, vector org, vector dir, float mult) QS_SpawnProjectile =
 {
 	local entity p, in;
@@ -506,10 +530,10 @@ entity(float id, vector org, vector dir, float mult) QS_SpawnProjectile =
 	else if (id == 9)
 	{
 		p.touch = QS_FlareTouch;
-		p.effects = p.effects | EF_DIMLIGHT;
 	}
 	if (id == 11)
 		p.effects = 0;
+	QS_ProjectileLight(p, id);
 	return p;
 };
 

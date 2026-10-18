@@ -7,6 +7,8 @@ First version.
 - Descent 1's weapons (lasers 1-4 and quad, vulcan, spreadfire, plasma,
   fusion; concussion, homing, smart, proximity, mega; flares) with its
   weapon models and effects.
-- Quake's pickups as Descent's powerups.
+- Quake's pickups as Descent's powerups, spinning at Descent's speed.
+- Quakescent options menu (F7).
+- Lasers and other weapons cast coloured light as they fly, as in Descent.
 - The converter reads registered (1.4/1.5) and shareware (1.0-1.2)
   Descent 1 data.

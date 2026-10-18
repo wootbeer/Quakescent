@@ -40,6 +40,11 @@ void(entity hit) QS_MoveImpact = {};
 void() QS_HudInit;
 void(float w, float h) QS_DrawHud;
 void(string msg) QS_PushMessage;
+float qs_menu_open;
+void() QS_MenuOpen;
+void() QS_MenuClose;
+float(float evtype, float key) QS_MenuInput;
+void(float w, float h) QS_DrawMenu;
 
 void(float apilevel, string enginename, float engineversion) CSQC_Init =
 {
@@ -64,8 +69,12 @@ void(float apilevel, string enginename, float engineversion) CSQC_Init =
 	registercommand("+qs_lookdown");
 	registercommand("-qs_lookdown");
 	registercommand("qs_levelship");
+	registercommand("qs_menu");
 	QS_LoadAssets();
 	QS_HudInit();
+	// Configs saved before the options menu existed don't bind it.
+	if (getkeybind(K_F7) == "")
+		localcmd("bind f7 qs_menu\n");
 };
 
 void(float down) QS_RearViewKey =
@@ -109,6 +118,12 @@ float(string cmd) CSQC_ConsoleCommand =
 	case "-qs_lookup": qs_key_lookup = 0; break;
 	case "+qs_lookdown": qs_key_lookdown = 1; break;
 	case "-qs_lookdown": qs_key_lookdown = 0; break;
+	case "qs_menu":
+		if (qs_menu_open)
+			QS_MenuClose();
+		else
+			QS_MenuOpen();
+		break;
 	case "qs_levelship":
 		if (qs_basis_init)
 			QS_LevelShip(180);
@@ -122,6 +137,8 @@ float(string cmd) CSQC_ConsoleCommand =
 // The mouse turns the ship itself rather than Quake's view angles.
 float(float evtype, float scanx, float chary, float devid) CSQC_InputEvent =
 {
+	if (qs_menu_open)
+		return QS_MenuInput(evtype, scanx);
 	if (evtype == IE_MOUSEDELTA && qs_state == QS_STATE_SHIP && qs_basis_init)
 	{
 		qs_pending_yaw = qs_pending_yaw + scanx * cvar("sensitivity") * cvar("m_yaw");
@@ -303,6 +320,7 @@ void(float vwidth, float vheight, float notmenu) CSQC_UpdateView =
 	renderscene();
 	if (qs_state)
 		QS_DrawHud(vwidth, vheight);
+	QS_DrawMenu(vwidth, vheight);
 	if (autocvar_qs_debugview)
 		drawstring('8 40', strcat(vtos(getproperty(VF_ORIGIN)), " ", vtos(getproperty(VF_ANGLES)),
 			" ", ftos(servercommandframe), "/", ftos(clientcommandframe)), '8 8', '1 1 1', 1, 0);

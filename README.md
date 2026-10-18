@@ -98,8 +98,12 @@ push a tag `v<VERSION>` or run the Release workflow from the Actions tab with
 | Drop proximity bomb | B |
 | Rear view (tap to toggle, hold to peek) | V |
 | Level the ship | Z |
+| Quakescent options | F7 |
 
-Settings (type them in the console, `~`):
+**F7** opens Quakescent's options (cockpit, turning, mouse momentum,
+thrust and damage multipliers, mouse speed and invert, and a "bind
+Descent-style keys" reset). Esc is Quake's own menu, with FTE's video, sound
+and key settings. The same settings from the console (`~`):
 
 | Setting | Default | |
 |---|---|---|

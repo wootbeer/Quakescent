@@ -312,8 +312,9 @@ def spr32(frames, group_interval=None):
 
     if group_interval:
         out += struct.pack('<ii', 1, len(frames))
+        # FTE takes each frame's own duration (and adds them up itself).
         for k in range(len(frames)):
-            out += struct.pack('<f', group_interval * (k + 1))
+            out += struct.pack('<f', group_interval)
         for w, h, rgba in frames:
             out += frame(w, h, rgba)
     else:
