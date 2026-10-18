@@ -22,6 +22,7 @@ First version.
   game.
 - Descent II's proximity bomb shows its red mine in the cockpit, not
   the homing missile.
+- In multiplayer, other players are Pyro-GX ships, not Quake's marine.
 - Getting hit knocks the ship around, as in Descent.
 - Ick Mode: monsters wear a face, bleed green and warp out.
 - Lasers and other weapons cast coloured light as they fly, as in Descent.

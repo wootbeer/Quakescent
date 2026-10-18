@@ -1037,7 +1037,7 @@ void() CheckPowerups =
 		self.frame = 0;
 		self.modelindex = modelindex_eyes;
 	}
-	else
+	else if (!(self.qs_ship && QS_HaveModel("pyro")))	// Quakescent: keep the ship
 		self.modelindex = modelindex_player;	// don't use eyes
 
 // invincibility
