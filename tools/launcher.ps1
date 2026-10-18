@@ -55,6 +55,22 @@ if (Test-Path (Join-Path $Root 'qc')) {
     $newest = Get-ChildItem (Join-Path $Root 'qc'), (Join-Path $Root 'csqc'), (Join-Path $Root 'mod') -Recurse -File |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if (-not (Test-Path $Progs) -or $newest.LastWriteTime -gt (Get-Item $Progs).LastWriteTime) {
+        # FTE's QuakeC compiler.  Fetched here rather than by build.py:
+        # Python's certificate checks can fail where Windows' succeed.
+        $Qcc = Join-Path $Root 'tools\fteqcc64.exe'
+        if (-not $env:FTEQCC -and -not (Test-Path $Qcc) -and -not (Get-Command fteqcc64.exe -ErrorAction SilentlyContinue)) {
+            Write-Host "Downloading fteqcc (FTE's QuakeC compiler)..."
+            $zip = Join-Path $env:TEMP "fteqcc-$FteVersion.zip"
+            Invoke-WebRequest "https://fastdl.idtech.space/bin/fteqcc-win-x86_64-$FteVersion.zip" -OutFile $zip
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $z = [System.IO.Compression.ZipFile]::OpenRead($zip)
+            try {
+                $entry = $z.Entries | Where-Object { $_.Name -eq 'fteqcc64.exe' } | Select-Object -First 1
+                if (-not $entry) { Fail "fteqcc64.exe wasn't in the download." }
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $Qcc, $true)
+            } finally { $z.Dispose() }
+            Remove-Item $zip
+        }
         $py = Find-Python
         if (-not $py) { Fail "Python 3 is needed to build the mod from source (https://www.python.org/downloads/)." }
         & $py[0] $py[1..9] (Join-Path $Root 'tools\build.py')
