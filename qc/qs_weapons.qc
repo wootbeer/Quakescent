@@ -924,7 +924,7 @@ void(float pw, float id, float mult) QS_FirePrimaryOnce =
 // front.  It runs on its own charge (a second of fire), which refills over
 // four seconds from energy while the trigger is up.
 
-.float qs_lastomega, qs_omegadamage, qs_omegadraw, qs_omegasound, qs_omegaimpact;
+.float qs_lastomega, qs_omegadamage, qs_omegasound, qs_omegaimpact;
 
 void() QS_OmegaRecharge =
 {
@@ -944,50 +944,6 @@ void() QS_OmegaRecharge =
 	if (diff < 2)
 		cost = cost * (diff + 2) / 4;
 	self.qs_energy = max(0, self.qs_energy - cost);
-};
-
-// One blob of the omega's lightning: shown briefly, then gone, so the arcs
-// redrawn every twentieth of a second crackle.
-void(vector org) QS_OmegaSpark =
-{
-	local entity e;
-
-	if (!QS_HaveVclip(103))
-		return;
-	e = spawn();
-	e.classname = "qs_omegaspark";
-	setmodel(e, qs_vclip_model[103]);
-	setorigin(e, org);
-	e.frame = floor(random() * qs_vclip_frames[103]);
-	e.scale = 0.9 * 2 * QS_SCALE / qs_vclip_size[103];
-	e.effects = EF_FULLBRIGHT | EF_ADDITIVE;
-	e.think = SUB_Remove;
-	e.nextthink = time + 0.1;
-};
-
-// Lightning from start to goal: a crackle of the omega's blob animation.
-void(vector start, vector goal) QS_DrawOmegaBolt =
-{
-	local vector d, p, pv, eye;
-	local float n, i, len;
-
-	eye = self.origin + QS_VIEW_OFS;
-	d = goal - start;
-	len = vlen(d);
-	n = bound(3, floor(len / (5 * QS_SCALE)), 16);
-	pv = normalize([QS_CRandom(), QS_CRandom(), QS_CRandom()]) * QS_SCALE;
-	for (i = 0; i < n; i++)
-	{
-		p = start + d * ((i + 0.5) / n);
-		// Bowed out in the middle.
-		p = p + pv * (sin((i + 0.5) / n * M_PI) * 4);
-		if (i % 4 == 3)
-			pv = pv + normalize([QS_CRandom(), QS_CRandom(), QS_CRandom()]) * QS_SCALE * 0.5;
-		// Not right in front of the eye (the cockpit hides those in
-		// Descent II; here they would fill the screen).
-		if (vlen(p - eye) > 32)
-			QS_OmegaSpark(p);
-	}
 };
 
 void(float held) QS_HandleOmega =
@@ -1056,11 +1012,9 @@ void(float held) QS_HandleOmega =
 			MOVE_NORMAL, self);
 		goal = trace_endpos;
 	}
-	if (time >= self.qs_omegadraw)
-	{
-		self.qs_omegadraw = time + 0.05;
-		QS_DrawOmegaBolt(start, goal);
-	}
+	// The client draws the lightning, a new arc every frame.
+	self.qs_omegagoal = goal;
+	self.qs_omegatime = time;
 	if (time >= self.qs_omegaimpact)
 	{
 		self.qs_omegaimpact = time + 0.25;

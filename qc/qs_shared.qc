@@ -81,6 +81,12 @@ const float STAT_QS_GUIDED = 40;     // entity number of the guided missile bein
 const float STAT_QS_FLASHED = 41;    // time a flash missile's flash started
 const float STAT_QS_SHAKE = 42;      // time an earthshaker's quake started
 const float STAT_QS_MISSILES = 60;   // 60-69: count of each secondary
+// The omega cannon's lightning, drawn by the client every frame: where it
+// strikes, and when it last fired.
+const float STAT_QS_OMEGA_X = 70;
+const float STAT_QS_OMEGA_Y = 71;
+const float STAT_QS_OMEGA_Z = 72;
+const float STAT_QS_OMEGA_TIME = 73;
 const float STAT_QS_OWNED = 43;      // bit per primary weapon owned
 const float STAT_QS_FLAGS = 44;      // QSF_*
 const float STAT_QS_PRIMREADY = 45;  // time the primary can fire again

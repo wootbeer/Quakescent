@@ -45,6 +45,8 @@ vector qs_ship_fwd, qs_ship_rgt, qs_ship_up;
 void(entity hit) QS_MoveImpact = {};
 
 void() QS_HudInit;
+void() QS_OmegaInit;
+void() QS_DrawOmega;
 void(float w, float h) QS_DrawHud;
 void(string msg) QS_PushMessage;
 float qs_menu_open;
@@ -84,6 +86,7 @@ void(float apilevel, string enginename, float engineversion) CSQC_Init =
 	registercommand("qs_menu");
 	QS_LoadAssets();
 	QS_HudInit();
+	QS_OmegaInit();
 	// Configs saved before the options menu existed don't bind it.
 	if (getkeybind(K_F7) == "")
 		localcmd("bind f7 qs_menu\n");
@@ -411,6 +414,7 @@ void(float vwidth, float vheight, float notmenu) CSQC_UpdateView =
 		setproperty(VF_ORIGIN, qs_view_org);
 		setproperty(VF_ANGLES, QS_ViewAngles());
 		QS_ViewEffects();
+		QS_DrawOmega();
 		if (getstatf(STAT_QS_FLAGS) & QSF_ACID)
 		{
 			// Descent's acid cheat wobbled the level; here the view wobbles.

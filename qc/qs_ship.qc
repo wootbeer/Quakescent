@@ -31,6 +31,8 @@
 .float qs_guidednum;         // the guided missile being flown (entity number)
 .entity qs_guidedmissile;
 .float qs_flashed, qs_shaken;
+.vector qs_omegagoal;
+.float qs_omegatime;
 .float qs_flags;             // QSF_*
 .float qs_primready, qs_secready, qs_missilegun, qs_fusion;
 .float qs_laserstat;         // qs_laser + 8 * qs_quad, for the cockpit
@@ -162,6 +164,10 @@ void() QS_RegisterStats =
 	clientstat(STAT_QS_GUIDED, EV_FLOAT, qs_guidednum);
 	clientstat(STAT_QS_FLASHED, EV_FLOAT, qs_flashed);
 	clientstat(STAT_QS_SHAKE, EV_FLOAT, qs_shaken);
+	clientstat(STAT_QS_OMEGA_X, EV_FLOAT, qs_omegagoal_x);
+	clientstat(STAT_QS_OMEGA_Y, EV_FLOAT, qs_omegagoal_y);
+	clientstat(STAT_QS_OMEGA_Z, EV_FLOAT, qs_omegagoal_z);
+	clientstat(STAT_QS_OMEGA_TIME, EV_FLOAT, qs_omegatime);
 	clientstat(STAT_QS_OWNED, EV_FLOAT, qs_owned);
 	clientstat(STAT_QS_FLAGS, EV_FLOAT, qs_flags);
 	clientstat(STAT_QS_PRIMREADY, EV_FLOAT, qs_primready);
