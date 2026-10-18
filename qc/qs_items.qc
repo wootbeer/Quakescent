@@ -123,8 +123,6 @@ void() QS_ItemLook =
 	local string pw;
 	local vector c;
 
-	if (!autocvar_qs_ship)
-		return;
 	pw = QS_ItemKind(self);
 	if (pw == "" || !QS_HavePowerup(pw))
 		return;

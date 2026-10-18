@@ -324,11 +324,6 @@ void() QS_ShipDie =
 
 void() QS_ShipSpawn =
 {
-	if (!autocvar_qs_ship)
-	{
-		self.qs_ship = FALSE;
-		return;
-	}
 	self.qs_ship = TRUE;
 	self.qs_state = QS_STATE_SHIP;
 	self.max_health = QS_MAX_SHIELDS;

@@ -124,8 +124,7 @@ push a tag `v<VERSION>` or run the Release workflow from the Actions tab with
 | Quakescent options | F7 |
 
 **F7** opens Quakescent's options (cockpit, turning, mouse momentum,
-thrust, weapon damage and damage taken, mouse speed and invert, Ick Mode,
-and a "bind Descent-style keys" reset). Esc is Quake's own menu, with FTE's video, sound
+thrust, weapon damage and damage taken, mouse speed and invert, Ick Mode, and a "bind Descent-style keys" reset). Esc is Quake's own menu, with FTE's video, sound
 and key settings. The same settings from the console (`~`):
 
 | Setting | Default | |
@@ -140,7 +139,6 @@ and key settings. The same settings from the console (`~`):
 | `qs_damagetaken` | 1 | damage taken multiplier (1 is Quake's own damage) |
 | `qs_ickmode` | 0 | Ick Mode |
 | `qs_shipbob` | 1 | the ship's gentle bob |
-| `qs_ship` | 1 | 0 plays as Quake's marine (from the next map) |
 
 Mouse speed is FTE's `sensitivity`.
 

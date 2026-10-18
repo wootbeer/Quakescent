@@ -15,7 +15,7 @@ float qs_menu_open;
 float qs_menu_sel;
 float qs_menu_paused;
 
-const float QS_MENU_ITEMS = 15;
+const float QS_MENU_ITEMS = 14;
 
 void() QS_MenuClose;
 
@@ -35,9 +35,8 @@ string(float i) QS_MenuLabel =
 	case 9: return "Mouse speed";
 	case 10: return "Invert mouse";
 	case 11: return "Ick Mode";
-	case 12: return "Ship (next level)";
-	case 13: return "Bind Descent-style keys";
-	case 14: return "Done";
+	case 12: return "Bind Descent-style keys";
+	case 13: return "Done";
 	}
 	return "";
 };
@@ -63,7 +62,6 @@ string(float i) QS_MenuValue =
 	case 9: return ftos(cvar("sensitivity"));
 	case 10: return QS_OnOff(cvar("m_pitch") < 0);
 	case 11: return QS_OnOff(cvar("qs_ickmode"));
-	case 12: return cvar("qs_ship") ? "Pyro-GX" : "Quake marine";
 	}
 	return "";
 };
@@ -95,15 +93,14 @@ void(float i, float dir) QS_MenuChange =
 	case 9: QS_Step("sensitivity", 0.5, 0.5, 30, dir ? dir : 1); break;
 	case 10: cvar_set("m_pitch", ftos(-cvar("m_pitch"))); break;
 	case 11: QS_Toggle("qs_ickmode"); break;
-	case 12: QS_Toggle("qs_ship"); break;
-	case 13:
+	case 12:
 		if (dir == 0)
 		{
 			localcmd("exec qs_keys.cfg\n");
 			QS_PushMessage("Descent-style keys bound");
 		}
 		break;
-	case 14:
+	case 13:
 		if (dir == 0)
 			QS_MenuClose();
 		break;

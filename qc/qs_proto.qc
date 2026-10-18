@@ -14,7 +14,6 @@ var float autocvar_qs_thrust = 1;        // thrust multiplier (1 = Descent's)
 var float autocvar_qs_shipbob = 1;       // Descent's gentle bob
 var float autocvar_qs_damage = 1;        // weapon damage multiplier
 var float autocvar_qs_damagetaken = 1;   // what hits the ship (1 = Quake's damage)
-var float autocvar_qs_ship = 1;          // 0: play as Quake's marine instead
 var float autocvar_qs_ickmode = 0;       // Ick Mode
 
 void() QS_Precache;
